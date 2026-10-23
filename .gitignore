@@ -41,3 +41,11 @@ example
 # generated native folders
 /ios
 /android
+
+# Local AI assistant configuration
+.claude/
+
+# Local editor settings (optional)
+# .vscode/
+
+**/*.zip
