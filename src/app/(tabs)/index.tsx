@@ -11,9 +11,12 @@ import {
   formatMonthYear,
   formatPercent,
 } from "@/shared/lib/format";
+import { useTheme } from "@/shared/theme/ThemeContext";
+import type { ThemeColors } from "@/shared/theme/palettes";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 type IconName = keyof typeof Ionicons.glyphMap;
+type ThemeColorKey = keyof ThemeColors;
 type WeekdayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 type DateKey = "today" | "yesterday";
 type TransactionCategoryKey =
@@ -33,8 +36,8 @@ type TransactionItem = {
   amount: number;
   type: "income" | "expense";
   icon: IconName;
-  iconColor: string;
-  iconBackground: string;
+  iconColor: ThemeColorKey;
+  iconBackground: ThemeColorKey;
 };
 
 const weeklySpending: {
@@ -61,8 +64,8 @@ const transactions: TransactionItem[] = [
     amount: 12_450,
     type: "expense",
     icon: "cart-outline",
-    iconColor: "#F3C66B",
-    iconBackground: "#332B1B",
+    iconColor: "warning",
+    iconBackground: "transactionFoodSurface",
   },
   {
     id: "2",
@@ -73,8 +76,8 @@ const transactions: TransactionItem[] = [
     amount: 450_000,
     type: "income",
     icon: "wallet-outline",
-    iconColor: colors.accent,
-    iconBackground: "#173A2A",
+    iconColor: "income",
+    iconBackground: "incomeSurface",
   },
   {
     id: "3",
@@ -84,8 +87,8 @@ const transactions: TransactionItem[] = [
     amount: 2_350,
     type: "expense",
     icon: "car-outline",
-    iconColor: "#A9B8FF",
-    iconBackground: "#222943",
+    iconColor: "transactionTransport",
+    iconBackground: "transactionTransportSurface",
   },
   {
     id: "4",
@@ -95,14 +98,15 @@ const transactions: TransactionItem[] = [
     amount: 1_800,
     type: "expense",
     icon: "cafe-outline",
-    iconColor: "#D9A67B",
-    iconBackground: "#34271F",
+    iconColor: "transactionCafe",
+    iconBackground: "transactionCafeSurface",
   },
 ];
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const { currency } = useCurrency();
+  const { colors } = useTheme();
   const router = useRouter();
   const [balanceVisible, setBalanceVisible] = useState(true);
 
@@ -124,7 +128,7 @@ export default function HomeScreen() {
         <View className="w-full max-w-[560px] self-center px-4 pt-2">
           <View className="mb-6 flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
-              <View className="h-[43px] w-[43px] items-center justify-center rounded-[15px] border border-[#286444] bg-accent-dark">
+              <View className="h-[43px] w-[43px] items-center justify-center rounded-[15px] border border-accent-muted bg-accent-dark">
                 <Ionicons
                   name="wallet-outline"
                   size={23}
@@ -157,7 +161,7 @@ export default function HomeScreen() {
                 <Ionicons
                   name="notifications-outline"
                   size={21}
-                  color={colors.text}
+                  color={colors.foreground}
                 />
               </View>
             </View>
@@ -172,11 +176,11 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <View className="relative mb-3 overflow-hidden rounded-[25px] border border-[#285039] bg-[#102219] p-6">
-            <View className="absolute -top-[85px] right-[-45px] h-[220px] w-[220px] rounded-full bg-[#17442E] opacity-60" />
+          <View className="relative mb-3 overflow-hidden rounded-[25px] border border-hero-border bg-hero p-6">
+            <View className="absolute -top-[85px] right-[-45px] h-[220px] w-[220px] rounded-full bg-hero-decoration opacity-60" />
 
             <View className="flex-row items-center justify-between">
-              <Text className="text-[11px] font-bold tracking-[1.5px] text-[#B2C7B8]">
+              <Text className="text-[11px] font-bold tracking-[1.5px] text-hero-label">
                 {t("home.totalBalance")}
               </Text>
 
@@ -193,7 +197,7 @@ export default function HomeScreen() {
                 <Ionicons
                   name={balanceVisible ? "eye-outline" : "eye-off-outline"}
                   size={21}
-                  color={colors.textSecondary}
+                  color={colors.muted}
                 />
               </Pressable>
             </View>
@@ -207,7 +211,7 @@ export default function HomeScreen() {
             </Text>
 
             <View className="mt-4 flex-row items-center gap-2">
-              <View className="flex-row items-center gap-1 rounded-[9px] bg-[#173B29] px-2 py-[5px]">
+              <View className="flex-row items-center gap-1 rounded-[9px] bg-positive-surface px-2 py-[5px]">
                 <Ionicons
                   name="trending-up-outline"
                   size={15}
@@ -218,14 +222,14 @@ export default function HomeScreen() {
                 </Text>
               </View>
 
-              <Text className="text-xs text-[#A2B4A7]">
+              <Text className="text-xs text-hero-secondary">
                 {t("home.previousMonth")}
               </Text>
             </View>
 
             <View className="absolute bottom-[-42px] right-[-5px]">
-              <View className="h-[105px] w-[105px] rounded-[53px] border border-[#356347] opacity-50" />
-              <View className="absolute left-[17px] top-[17px] h-[71px] w-[71px] rounded-[36px] border border-[#356347] opacity-60" />
+              <View className="h-[105px] w-[105px] rounded-[53px] border border-hero-line opacity-50" />
+              <View className="absolute left-[17px] top-[17px] h-[71px] w-[71px] rounded-[36px] border border-hero-line opacity-60" />
             </View>
           </View>
 
@@ -236,7 +240,7 @@ export default function HomeScreen() {
               period={t("home.thisMonth")}
               icon="arrow-down-outline"
               color={colors.accent}
-              iconBackground="#173A2A"
+              iconBackground={colors.incomeSurface}
             />
 
             <SummaryCard
@@ -245,7 +249,7 @@ export default function HomeScreen() {
               period={t("home.thisMonth")}
               icon="arrow-up-outline"
               color={colors.expense}
-              iconBackground="#3B2024"
+              iconBackground={colors.expenseSurface}
             />
           </View>
 
@@ -308,7 +312,7 @@ export default function HomeScreen() {
                           height: `${item.value * 100}%`,
                           backgroundColor: item.highlighted
                             ? colors.accent
-                            : "#315440",
+                            : colors.chartBar,
                         }}
                       />
                     </View>
@@ -356,7 +360,7 @@ export default function HomeScreen() {
               accessibilityRole="button"
             >
               <View className="flex-row items-center gap-3">
-                <View className="h-12 w-12 items-center justify-center rounded-2xl border border-[#285039] bg-accent-dark">
+                <View className="h-12 w-12 items-center justify-center rounded-2xl border border-accent-muted bg-accent-dark">
                   <Ionicons
                     name="laptop-outline"
                     size={24}
@@ -449,12 +453,14 @@ export default function HomeScreen() {
                     >
                       <View
                         className="h-[43px] w-[43px] items-center justify-center rounded-[15px]"
-                        style={{ backgroundColor: transaction.iconBackground }}
+                        style={{
+                          backgroundColor: colors[transaction.iconBackground],
+                        }}
                       >
                         <Ionicons
                           name={transaction.icon}
                           size={21}
-                          color={transaction.iconColor}
+                          color={colors[transaction.iconColor]}
                         />
                       </View>
 
@@ -478,7 +484,7 @@ export default function HomeScreen() {
                           color:
                             transaction.type === "income"
                               ? colors.accent
-                              : colors.text,
+                              : colors.foreground,
                         }}
                       >
                         {amountLabel}
@@ -566,19 +572,19 @@ function QuickAction({
     >
       <View
         className={`h-[35px] w-[35px] items-center justify-center rounded-xl ${
-          primary ? "bg-[#B4F5D9]" : "bg-accent-dark"
+          primary ? "bg-accent-contrast" : "bg-accent-dark"
         }`}
       >
         <Ionicons
           name={icon}
           size={21}
-          color={primary ? colors.background : colors.accent}
+          color={primary ? colors.accentContrastText : colors.accent}
         />
       </View>
 
       <Text
         className={`text-[11px] font-bold ${
-          primary ? "text-[#06140C]" : "text-foreground"
+          primary ? "text-accent-contrast-text" : "text-foreground"
         }`}
       >
         {title}

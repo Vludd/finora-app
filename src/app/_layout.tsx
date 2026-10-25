@@ -1,11 +1,14 @@
 import "../../global.css";
 
+import { LinearGradient } from "expo-linear-gradient";
+import { NavigationBar } from "expo-navigation-bar";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors } from "@/constants/theme";
+import { colors as defaultColors } from "@/constants/theme";
 import { initializeI18n } from "@/i18n";
 import {
   CurrencyProvider,
@@ -15,16 +18,75 @@ import {
   DEFAULT_CURRENCY_CODE,
   type CurrencyCode,
 } from "@/shared/lib/currencies";
+import {
+  loadSavedThemeSettings,
+  ThemeProvider,
+  useTheme,
+  type ThemeSettings,
+} from "@/shared/theme/ThemeContext";
 
-const rootStackScreenOptions = {
-  headerShown: false,
-  contentStyle: { backgroundColor: colors.background },
-  animation: "fade",
-} as const;
+type InitialAppState = {
+  currencyCode: CurrencyCode;
+  themeSettings: ThemeSettings;
+};
+
+function AppNavigator() {
+  const { colors, resolvedColorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const isDark = resolvedColorScheme === "dark";
+  const statusBarHeight = Math.max(insets.top, 24);
+  const gradientHeight = statusBarHeight + 12;
+
+  return (
+    <>
+      <StatusBar style={isDark ? "light" : "dark"} />
+
+      {Platform.OS === "android" && (
+        <NavigationBar style={isDark ? "light" : "dark"} />
+      )}
+
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: colors.background,
+          },
+          animation: "fade",
+        }}
+      />
+
+      {Platform.OS === "android" && (
+        <LinearGradient
+          pointerEvents="none"
+          colors={
+            isDark
+              ? ["rgba(0,0,0,0.62)", "rgba(0,0,0,0.22)", "rgba(0,0,0,0)"]
+              : [
+                  "rgba(255,255,255,0.82)",
+                  "rgba(255,255,255,0.28)",
+                  "rgba(255,255,255,0)",
+                ]
+          }
+          locations={[0, statusBarHeight / gradientHeight, 1]}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: gradientHeight,
+            zIndex: 1000,
+          }}
+        />
+      )}
+    </>
+  );
+}
 
 export default function RootLayout() {
-  const [initialCurrencyCode, setInitialCurrencyCode] =
-    useState<CurrencyCode | null>(null);
+  const [initialState, setInitialState] = useState<InitialAppState | null>(
+    null,
+  );
 
   useEffect(() => {
     let active = true;
@@ -36,12 +98,13 @@ export default function RootLayout() {
         console.warn("Failed to initialize translations", error);
       }
 
-      const currencyCode = await loadSavedCurrency().catch(
-        () => DEFAULT_CURRENCY_CODE,
-      );
+      const [currencyCode, themeSettings] = await Promise.all([
+        loadSavedCurrency().catch(() => DEFAULT_CURRENCY_CODE),
+        loadSavedThemeSettings(),
+      ]);
 
       if (active) {
-        setInitialCurrencyCode(currencyCode);
+        setInitialState({ currencyCode, themeSettings });
       }
     }
 
@@ -52,18 +115,25 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!initialCurrencyCode) {
+  if (!initialState) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color={colors.accent} />
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: defaultColors.background }}
+      >
+        <ActivityIndicator color={defaultColors.accent} />
       </View>
     );
   }
 
   return (
-    <CurrencyProvider initialCurrencyCode={initialCurrencyCode}>
-      <StatusBar style="light" />
-      <Stack screenOptions={rootStackScreenOptions} />
+    <CurrencyProvider initialCurrencyCode={initialState.currencyCode}>
+      <ThemeProvider
+        mode={initialState.themeSettings.mode}
+        paletteId={initialState.themeSettings.paletteId}
+      >
+        <AppNavigator />
+      </ThemeProvider>
     </CurrencyProvider>
   );
 }

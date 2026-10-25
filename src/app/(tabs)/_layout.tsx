@@ -2,29 +2,31 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
 
-import { colors } from "@/constants/theme";
-
-const tabsScreenOptions = {
-  headerShown: false,
-  tabBarActiveTintColor: colors.accent,
-  tabBarInactiveTintColor: colors.textMuted,
-  tabBarStyle: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    height: 64,
-    paddingTop: 7,
-    paddingBottom: 7,
-  },
-  tabBarLabelStyle: {
-    fontSize: 10,
-    fontWeight: "600",
-  },
-  tabBarHideOnKeyboard: true,
-} as const;
+import { useTheme } from "@/shared/theme/ThemeContext";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+
+  const tabsScreenOptions = {
+    headerShown: false,
+    tabBarActiveTintColor: colors.accent,
+    tabBarInactiveTintColor: colors.subtle,
+    tabBarStyle: {
+      backgroundColor: "transparent",
+      borderTopColor: "transparent",
+      elevation: 0,
+      // borderTopWidth: 1,
+      height: 64,
+      paddingTop: 7,
+      paddingBottom: 7,
+    },
+    tabBarLabelStyle: {
+      fontSize: 10,
+      fontWeight: "600",
+    },
+    tabBarHideOnKeyboard: true,
+  } as const;
 
   return (
     <Tabs screenOptions={tabsScreenOptions}>
