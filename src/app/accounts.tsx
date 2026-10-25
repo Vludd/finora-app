@@ -22,6 +22,10 @@ import type {
   AccountType,
 } from "@/shared/accounts/accountTypes";
 import { useAccounts } from "@/shared/context/AccountContext";
+import { useCurrency } from "@/shared/context/CurrencyContext";
+import { useTransactions } from "@/shared/context/TransactionContext";
+import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
+import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
@@ -127,6 +131,8 @@ export default function AccountsScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts();
+  const { transactions } = useTransactions();
+  const { currency } = useCurrency();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -287,6 +293,9 @@ export default function AccountsScreen() {
                     </Text>
                     <Text className="text-xs text-muted">
                       {t(`accounts.types.${account.type}`)}
+                    </Text>
+                    <Text className="text-sm font-extrabold text-foreground">
+                      {formatCurrency(calculateAccountBalance(account.id, transactions), currency)}
                     </Text>
                   </View>
 

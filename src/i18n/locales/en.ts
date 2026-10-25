@@ -76,7 +76,8 @@ const en = {
 
   transactions: {
     title: "Activity",
-    description: "Your income and expenses will appear here.",
+    description: "Income, expenses, and transfers between accounts.",
+    editorDescription: "Enter the amount and transaction details.",
     addTransaction: "Add transaction",
     editTransaction: "Edit transaction",
     amount: "Amount",
@@ -98,6 +99,23 @@ const en = {
     incomes: "Income",
     expenses: "Expenses",
     work: "Work",
+    fromAccount: "From account",
+    toAccount: "To account",
+    deleteTitle: "Delete transaction?",
+    noResults: "No results found",
+    noResultsDescription: "Change the search or choose another filter.",
+    unknownAccount: "Unknown account",
+    uncategorized: "Uncategorized",
+    createAccountFirst: "Create an account first",
+    manageCategories: "Categories",
+    noCategories: "There are no categories of this type yet. You can save the transaction without a category.",
+    dateFormatHint: "Date format: YYYY-MM-DD",
+    validation: {
+      accountRequired: "Choose an account.",
+      destinationRequired: "Choose a destination account.",
+      differentAccounts: "The source and destination accounts must be different.",
+      dateRequired: "Enter a valid date in YYYY-MM-DD format.",
+    },
   },
 
   budgets: {

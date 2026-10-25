@@ -76,7 +76,8 @@ const ru = {
 
   transactions: {
     title: "Операции",
-    description: "Здесь будет список доходов и расходов.",
+    description: "Доходы, расходы и переводы между счетами.",
+    editorDescription: "Заполните сумму и детали операции.",
     addTransaction: "Добавить операцию",
     editTransaction: "Изменить операцию",
     amount: "Сумма",
@@ -97,6 +98,23 @@ const ru = {
     incomes: "Доходы",
     expenses: "Расходы",
     work: "Работа",
+    fromAccount: "Со счёта",
+    toAccount: "На счёт",
+    deleteTitle: "Удалить операцию?",
+    noResults: "Ничего не найдено",
+    noResultsDescription: "Измените поиск или выберите другой фильтр.",
+    unknownAccount: "Неизвестный счёт",
+    uncategorized: "Без категории",
+    createAccountFirst: "Сначала создайте счёт",
+    manageCategories: "Категории",
+    noCategories: "Категорий этого типа пока нет. Операцию можно сохранить без категории.",
+    dateFormatHint: "Формат даты: ГГГГ-ММ-ДД",
+    validation: {
+      accountRequired: "Выберите счёт.",
+      destinationRequired: "Выберите счёт-получатель.",
+      differentAccounts: "Счёт отправления и получения должны отличаться.",
+      dateRequired: "Введите существующую дату в формате ГГГГ-ММ-ДД.",
+    },
   },
 
   budgets: {

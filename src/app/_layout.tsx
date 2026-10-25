@@ -12,7 +12,9 @@ import { colors as defaultColors } from "@/constants/theme";
 import { initializeI18n } from "@/i18n";
 import type { Account } from "@/shared/accounts/accountTypes";
 import type { Category } from "@/shared/categories/categoryTypes";
+import type { Transaction } from "@/shared/transactions/transactionTypes";
 import { AccountProvider, loadSavedAccounts } from "@/shared/context/AccountContext";
+import { TransactionProvider, loadSavedTransactions } from "@/shared/context/TransactionContext";
 import {
   CategoryProvider,
   loadSavedCategories,
@@ -37,6 +39,7 @@ type InitialAppState = {
   themeSettings: ThemeSettings;
   categories: Category[];
   accounts: Account[];
+  transactions: Transaction[];
 };
 
 function AppNavigator() {
@@ -117,15 +120,16 @@ export default function RootLayout() {
         console.warn("Failed to initialize translations", error);
       }
 
-      const [currencyCode, themeSettings, categories, accounts] = await Promise.all([
+      const [currencyCode, themeSettings, categories, accounts, transactions] = await Promise.all([
         loadSavedCurrency().catch(() => DEFAULT_CURRENCY_CODE),
         loadSavedThemeSettings(),
         loadSavedCategories(),
         loadSavedAccounts(),
+        loadSavedTransactions(),
       ]);
 
       if (active) {
-        setInitialState({ currencyCode, themeSettings, categories, accounts });
+        setInitialState({ currencyCode, themeSettings, categories, accounts, transactions });
       }
     }
 
@@ -148,17 +152,19 @@ export default function RootLayout() {
   }
 
   return (
-    <AccountProvider initialAccounts={initialState.accounts}>
-      <CategoryProvider initialCategories={initialState.categories}>
-        <CurrencyProvider initialCurrencyCode={initialState.currencyCode}>
-          <ThemeProvider
-            mode={initialState.themeSettings.mode}
-            paletteId={initialState.themeSettings.paletteId}
-          >
-            <AppNavigator />
-          </ThemeProvider>
-        </CurrencyProvider>
-      </CategoryProvider>
-    </AccountProvider>
+    <TransactionProvider initialTransactions={initialState.transactions}>
+      <AccountProvider initialAccounts={initialState.accounts}>
+        <CategoryProvider initialCategories={initialState.categories}>
+          <CurrencyProvider initialCurrencyCode={initialState.currencyCode}>
+            <ThemeProvider
+              mode={initialState.themeSettings.mode}
+              paletteId={initialState.themeSettings.paletteId}
+            >
+              <AppNavigator />
+            </ThemeProvider>
+          </CurrencyProvider>
+        </CategoryProvider>
+      </AccountProvider>
+    </TransactionProvider>
   );
 }
