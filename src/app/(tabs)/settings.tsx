@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -34,6 +35,7 @@ const themeModes: {
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const { currency, currencies, setCurrency } = useCurrency();
   const {
     colors,
@@ -196,6 +198,29 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/categories")}
+          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
+        >
+          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
+            <Ionicons
+              name="pricetags-outline"
+              size={23}
+              color={colors.accent}
+            />
+          </View>
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="text-base font-semibold text-foreground">
+              {t("categories.manage.title")}
+            </Text>
+            <Text className="text-sm leading-5 text-muted">
+              {t("categories.manage.description")}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
+        </Pressable>
 
         <View className="gap-3 rounded-[20px] border border-border bg-surface p-4">
           <Text className="text-lg font-semibold text-foreground">

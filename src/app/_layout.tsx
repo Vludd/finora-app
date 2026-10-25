@@ -10,6 +10,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors as defaultColors } from "@/constants/theme";
 import { initializeI18n } from "@/i18n";
+import type { Category } from "@/shared/categories/categoryTypes";
+import {
+  CategoryProvider,
+  loadSavedCategories,
+} from "@/shared/context/CategoryContext";
 import {
   CurrencyProvider,
   loadSavedCurrency,
@@ -28,6 +33,7 @@ import {
 type InitialAppState = {
   currencyCode: CurrencyCode;
   themeSettings: ThemeSettings;
+  categories: Category[];
 };
 
 function AppNavigator() {
@@ -54,7 +60,13 @@ function AppNavigator() {
           },
           animation: "fade",
         }}
-      />
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="categories"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+      </Stack>
 
       {Platform.OS === "android" && (
         <LinearGradient
@@ -98,13 +110,14 @@ export default function RootLayout() {
         console.warn("Failed to initialize translations", error);
       }
 
-      const [currencyCode, themeSettings] = await Promise.all([
+      const [currencyCode, themeSettings, categories] = await Promise.all([
         loadSavedCurrency().catch(() => DEFAULT_CURRENCY_CODE),
         loadSavedThemeSettings(),
+        loadSavedCategories(),
       ]);
 
       if (active) {
-        setInitialState({ currencyCode, themeSettings });
+        setInitialState({ currencyCode, themeSettings, categories });
       }
     }
 
@@ -127,13 +140,15 @@ export default function RootLayout() {
   }
 
   return (
-    <CurrencyProvider initialCurrencyCode={initialState.currencyCode}>
-      <ThemeProvider
-        mode={initialState.themeSettings.mode}
-        paletteId={initialState.themeSettings.paletteId}
-      >
-        <AppNavigator />
-      </ThemeProvider>
-    </CurrencyProvider>
+    <CategoryProvider initialCategories={initialState.categories}>
+      <CurrencyProvider initialCurrencyCode={initialState.currencyCode}>
+        <ThemeProvider
+          mode={initialState.themeSettings.mode}
+          paletteId={initialState.themeSettings.paletteId}
+        >
+          <AppNavigator />
+        </ThemeProvider>
+      </CurrencyProvider>
+    </CategoryProvider>
   );
 }
