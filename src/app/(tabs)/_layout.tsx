@@ -3,10 +3,12 @@ import { Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "@/shared/theme/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const tabsScreenOptions = {
     headerShown: false,
@@ -17,9 +19,9 @@ export default function TabsLayout() {
       borderTopColor: "transparent",
       elevation: 0,
       // borderTopWidth: 1,
-      height: 64,
+      height: 64 + insets.bottom,
       paddingTop: 7,
-      paddingBottom: 7,
+      paddingBottom: 7 + insets.bottom,
     },
     tabBarLabelStyle: {
       fontSize: 10,

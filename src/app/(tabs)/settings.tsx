@@ -6,12 +6,9 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { changeAppLanguage } from "@/i18n";
 import { type AppLanguage } from "@/i18n/resources";
 import { useCurrency } from "@/shared/context/CurrencyContext";
-import { SafeAreaView } from "@/shared/ui/SafeAreaView";
-import {
-  useTheme,
-  type ThemeMode,
-} from "@/shared/theme/ThemeContext";
+import { useTheme, type ThemeMode } from "@/shared/theme/ThemeContext";
 import { THEME_PALETTES } from "@/shared/theme/palettes";
+import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 const languages: { code: AppLanguage; label: string }[] = [
   { code: "en", label: "English" },
@@ -20,10 +17,17 @@ const languages: { code: AppLanguage; label: string }[] = [
 
 const themeModes: {
   value: ThemeMode;
-  labelKey: "settings.themeSystem" | "settings.themeLight" | "settings.themeDark";
+  labelKey:
+    | "settings.themeSystem"
+    | "settings.themeLight"
+    | "settings.themeDark";
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { value: "system", labelKey: "settings.themeSystem", icon: "phone-portrait-outline" },
+  {
+    value: "system",
+    labelKey: "settings.themeSystem",
+    icon: "phone-portrait-outline",
+  },
   { value: "light", labelKey: "settings.themeLight", icon: "sunny-outline" },
   { value: "dark", labelKey: "settings.themeDark", icon: "moon-outline" },
 ];
@@ -55,7 +59,7 @@ export default function SettingsScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-background pt-4" edges={["top"]}>
       <ScrollView
         className="flex-1"
         contentContainerClassName="gap-6 px-4 pb-8 pt-4"
