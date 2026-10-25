@@ -34,6 +34,7 @@ const en = {
   home: {
     title: "My finances",
     totalBalance: "Total balance",
+    accountsCount: "Accounts: {{count}}",
     income: "Income",
     expenses: "Expenses",
     quickActions: "Quick actions",
@@ -162,6 +163,7 @@ const en = {
     addAccount: "Add account",
     editAccount: "Edit account",
     totalBalance: "Total balance",
+    accountsCount: "Accounts: {{count}}",
     cash: "Cash",
     bankAccount: "Bank account",
     card: "Bank card",

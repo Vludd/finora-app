@@ -34,6 +34,7 @@ const ru = {
   home: {
     title: "Мои финансы",
     totalBalance: "Общий баланс",
+    accountsCount: "Количество счетов: {{count}}",
     income: "Доходы",
     expenses: "Расходы",
     quickActions: "Быстрые действия",
@@ -159,6 +160,7 @@ const ru = {
     addAccount: "Добавить счёт",
     editAccount: "Изменить счёт",
     totalBalance: "Общий баланс",
+    accountsCount: "Количество счетов: {{count}}",
     cash: "Наличные",
     bankAccount: "Банковский счёт",
     card: "Банковская карта",

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -76,6 +76,7 @@ function getDateLabel(
 export default function TransactionsScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams<{ create?: string; type?: string }>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { currency } = useCurrency();
@@ -136,22 +137,39 @@ export default function TransactionsScreen() {
       .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   }, [transactions, activeFilter, search, locale, accounts, categories]);
 
-  function openCreateEditor(type: TransactionType = "expense") {
-    if (accounts.length === 0) {
-      router.push("/accounts");
-      return;
-    }
-    setEditingId(null);
-    setDraftType(type);
-    setDraftAmount("");
-    setDraftAccountId(accounts[0]?.id ?? "");
-    setDraftToAccountId(accounts[1]?.id ?? "");
-    setDraftCategoryId(categories.find((category) => category.type === type)?.id ?? "");
-    setDraftDate(localDateString());
-    setDraftNote("");
-    setFormError("");
-    setEditorVisible(true);
-  }
+  const openCreateEditor = useCallback(
+    (type: TransactionType = "expense") => {
+      if (accounts.length === 0) {
+        router.push("/accounts");
+        return;
+      }
+      setEditingId(null);
+      setDraftType(type);
+      setDraftAmount("");
+      setDraftAccountId(accounts[0]?.id ?? "");
+      setDraftToAccountId(accounts[1]?.id ?? "");
+      setDraftCategoryId(
+        categories.find((category) => category.type === type)?.id ?? "",
+      );
+      setDraftDate(localDateString());
+      setDraftNote("");
+      setFormError("");
+      setEditorVisible(true);
+    },
+    [accounts, categories, router],
+  );
+
+  useEffect(() => {
+    if (params.create !== "1") return;
+
+    const requestedType: TransactionType =
+      params.type === "income" || params.type === "transfer"
+        ? params.type
+        : "expense";
+
+    openCreateEditor(requestedType);
+    router.setParams({ create: undefined, type: undefined });
+  }, [params.create, params.type, openCreateEditor, router]);
 
   function openEditEditor(transaction: Transaction) {
     setEditingId(transaction.id);
