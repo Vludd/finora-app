@@ -10,7 +10,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors as defaultColors } from "@/constants/theme";
 import { initializeI18n } from "@/i18n";
+import type { Account } from "@/shared/accounts/accountTypes";
 import type { Category } from "@/shared/categories/categoryTypes";
+import { AccountProvider, loadSavedAccounts } from "@/shared/context/AccountContext";
 import {
   CategoryProvider,
   loadSavedCategories,
@@ -34,6 +36,7 @@ type InitialAppState = {
   currencyCode: CurrencyCode;
   themeSettings: ThemeSettings;
   categories: Category[];
+  accounts: Account[];
 };
 
 function AppNavigator() {
@@ -64,6 +67,10 @@ function AppNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="categories"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="accounts"
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />
       </Stack>
@@ -110,14 +117,15 @@ export default function RootLayout() {
         console.warn("Failed to initialize translations", error);
       }
 
-      const [currencyCode, themeSettings, categories] = await Promise.all([
+      const [currencyCode, themeSettings, categories, accounts] = await Promise.all([
         loadSavedCurrency().catch(() => DEFAULT_CURRENCY_CODE),
         loadSavedThemeSettings(),
         loadSavedCategories(),
+        loadSavedAccounts(),
       ]);
 
       if (active) {
-        setInitialState({ currencyCode, themeSettings, categories });
+        setInitialState({ currencyCode, themeSettings, categories, accounts });
       }
     }
 
@@ -140,15 +148,17 @@ export default function RootLayout() {
   }
 
   return (
-    <CategoryProvider initialCategories={initialState.categories}>
-      <CurrencyProvider initialCurrencyCode={initialState.currencyCode}>
-        <ThemeProvider
-          mode={initialState.themeSettings.mode}
-          paletteId={initialState.themeSettings.paletteId}
-        >
-          <AppNavigator />
-        </ThemeProvider>
-      </CurrencyProvider>
-    </CategoryProvider>
+    <AccountProvider initialAccounts={initialState.accounts}>
+      <CategoryProvider initialCategories={initialState.categories}>
+        <CurrencyProvider initialCurrencyCode={initialState.currencyCode}>
+          <ThemeProvider
+            mode={initialState.themeSettings.mode}
+            paletteId={initialState.themeSettings.paletteId}
+          >
+            <AppNavigator />
+          </ThemeProvider>
+        </CurrencyProvider>
+      </CategoryProvider>
+    </AccountProvider>
   );
 }

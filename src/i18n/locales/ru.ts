@@ -59,7 +59,6 @@ const ru = {
     demoFooter: "Finora · Демо-данные для разработки",
   },
 
-
   weekdays: {
     mon: "Пн",
     tue: "Вт",
@@ -150,6 +149,27 @@ const ru = {
     openingBalance: "Начальный баланс",
     noAccounts: "Счетов пока нет",
     noAccountsDescription: "Добавьте счёт для учёта денег.",
+    types: {
+      card: "Банковская карта",
+      cash: "Наличные",
+      deposit: "Депозит",
+    },
+    manage: {
+      newAccount: "Новый счёт",
+      editorDescription: "Выберите тип, название, значок и акцентный цвет.",
+      accountType: "Тип счёта",
+      nameRequired: "Введите название счёта.",
+      chooseIcon: "Выберите значок",
+      accentColor: "Акцентный цвет",
+      colorOption: "Цвет",
+      preview: "Предпросмотр",
+      deleteTitle: "Удалить счёт?",
+      deleteMessage:
+        "Счёт «{{name}}» будет удалён. Это действие нельзя отменить.",
+      emptyTitle: "Пока нет счетов",
+      emptyDescription:
+        "Добавьте первый счёт: банковскую карту, наличные или депозит.",
+    },
   },
 
   categories: {
@@ -193,7 +213,8 @@ const ru = {
       preview: "Предпросмотр",
       colorOption: "Цвет",
       deleteTitle: "Удалить категорию?",
-      deleteMessage: "Категория «{{name}}» будет удалена. Это действие нельзя отменить.",
+      deleteMessage:
+        "Категория «{{name}}» будет удалена. Это действие нельзя отменить.",
       emptyTitle: "Пока нет категорий",
       emptyDescription: "Добавьте свою первую категорию с помощью кнопки выше.",
     },
@@ -215,12 +236,14 @@ const ru = {
     languageDescription: "Выберите язык интерфейса.",
     appearance: "Внешний вид",
     themeMode: "Режим темы",
-    themeModeDescription: "Выберите, будет ли Finora следовать настройкам устройства или использовать фиксированную тему.",
+    themeModeDescription:
+      "Выберите, будет ли Finora следовать настройкам устройства или использовать фиксированную тему.",
     themeSystem: "Системная",
     themeLight: "Светлая",
     themeDark: "Тёмная",
     colorScheme: "Цветовая схема",
-    colorSchemeDescription: "Выберите акцентную палитру. У каждой палитры есть светлый и тёмный варианты.",
+    colorSchemeDescription:
+      "Выберите акцентную палитру. У каждой палитры есть светлый и тёмный варианты.",
     palettes: {
       emerald: "Изумрудная",
       ocean: "Океан",
@@ -230,7 +253,8 @@ const ru = {
       monochrome: "Монохромная",
     },
     currency: "Валюта",
-    currencyDescription: "Валюта отображения сумм. Конвертация остатков и операций пока не выполняется.",
+    currencyDescription:
+      "Валюта отображения сумм. Конвертация остатков и операций пока не выполняется.",
     currencySearch: "Поиск по названию или коду валюты",
     noCurrenciesFound: "Подходящие валюты не найдены.",
     about: "О приложении",

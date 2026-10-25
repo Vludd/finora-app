@@ -201,6 +201,25 @@ export default function SettingsScreen() {
 
         <Pressable
           accessibilityRole="button"
+          onPress={() => router.push("/accounts")}
+          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
+        >
+          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
+            <Ionicons name="wallet-outline" size={23} color={colors.accent} />
+          </View>
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="text-base font-semibold text-foreground">
+              {t("accounts.title")}
+            </Text>
+            <Text className="text-sm leading-5 text-muted">
+              {t("accounts.description")}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
           onPress={() => router.push("/categories")}
           className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
         >

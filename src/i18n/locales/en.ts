@@ -59,7 +59,6 @@ const en = {
     demoFooter: "Finora · Demo data for development",
   },
 
-
   weekdays: {
     mon: "Mon",
     tue: "Tue",
@@ -153,6 +152,27 @@ const en = {
     openingBalance: "Opening balance",
     noAccounts: "No accounts yet",
     noAccountsDescription: "Add an account to start tracking your money.",
+    types: {
+      card: "Bank card",
+      cash: "Cash",
+      deposit: "Deposit",
+    },
+    manage: {
+      newAccount: "New account",
+      editorDescription: "Choose a type, name, icon, and accent color.",
+      accountType: "Account type",
+      nameRequired: "Enter an account name.",
+      chooseIcon: "Choose an icon",
+      accentColor: "Accent color",
+      colorOption: "Color",
+      preview: "Preview",
+      deleteTitle: "Delete account?",
+      deleteMessage:
+        "“{{name}}” will be deleted. This action cannot be undone.",
+      emptyTitle: "No accounts yet",
+      emptyDescription:
+        "Add your first account: a bank card, cash, or a deposit.",
+    },
   },
 
   categories: {
@@ -196,7 +216,8 @@ const en = {
       preview: "Preview",
       colorOption: "Color",
       deleteTitle: "Delete category?",
-      deleteMessage: "“{{name}}” will be deleted. This action cannot be undone.",
+      deleteMessage:
+        "“{{name}}” will be deleted. This action cannot be undone.",
       emptyTitle: "No categories here yet",
       emptyDescription: "Add your first category using the button above.",
     },
@@ -218,12 +239,14 @@ const en = {
     languageDescription: "Choose the interface language.",
     appearance: "Appearance",
     themeMode: "Theme mode",
-    themeModeDescription: "Choose whether Finora follows your device or uses a fixed appearance.",
+    themeModeDescription:
+      "Choose whether Finora follows your device or uses a fixed appearance.",
     themeSystem: "System",
     themeLight: "Light",
     themeDark: "Dark",
     colorScheme: "Color palette",
-    colorSchemeDescription: "Choose an accent palette. Every palette includes light and dark variants.",
+    colorSchemeDescription:
+      "Choose an accent palette. Every palette includes light and dark variants.",
     palettes: {
       emerald: "Emerald",
       ocean: "Ocean",
@@ -233,7 +256,8 @@ const en = {
       monochrome: "Monochrome",
     },
     currency: "Currency",
-    currencyDescription: "Choose the currency used to display amounts. Exchange conversion is not enabled yet.",
+    currencyDescription:
+      "Choose the currency used to display amounts. Exchange conversion is not enabled yet.",
     currencySearch: "Search by currency name or code",
     noCurrenciesFound: "No matching currencies found.",
     about: "About",
