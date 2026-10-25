@@ -28,11 +28,11 @@ const en = {
     transactions: "Activity",
     budgets: "Budget",
     goals: "Goals",
-    more: "More",
+    settings: "Settings",
   },
 
   home: {
-    title: "My finances",
+    title: "Home",
     totalBalance: "Total balance",
     accountsCount: "Accounts: {{count}}",
     income: "Income",
@@ -109,12 +109,14 @@ const en = {
     uncategorized: "Uncategorized",
     createAccountFirst: "Create an account first",
     manageCategories: "Categories",
-    noCategories: "There are no categories of this type yet. You can save the transaction without a category.",
+    noCategories:
+      "There are no categories of this type yet. You can save the transaction without a category.",
     dateFormatHint: "Date format: YYYY-MM-DD",
     validation: {
       accountRequired: "Choose an account.",
       destinationRequired: "Choose a destination account.",
-      differentAccounts: "The source and destination accounts must be different.",
+      differentAccounts:
+        "The source and destination accounts must be different.",
       dateRequired: "Enter a valid date in YYYY-MM-DD format.",
     },
   },

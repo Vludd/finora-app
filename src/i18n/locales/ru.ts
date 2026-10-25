@@ -28,11 +28,11 @@ const ru = {
     transactions: "Операции",
     budgets: "Бюджет",
     goals: "Цели",
-    more: "Ещё",
+    settings: "Настройки",
   },
 
   home: {
-    title: "Мои финансы",
+    title: "Главная",
     totalBalance: "Общий баланс",
     accountsCount: "Количество счетов: {{count}}",
     income: "Доходы",
@@ -108,7 +108,8 @@ const ru = {
     uncategorized: "Без категории",
     createAccountFirst: "Сначала создайте счёт",
     manageCategories: "Категории",
-    noCategories: "Категорий этого типа пока нет. Операцию можно сохранить без категории.",
+    noCategories:
+      "Категорий этого типа пока нет. Операцию можно сохранить без категории.",
     dateFormatHint: "Формат даты: ГГГГ-ММ-ДД",
     validation: {
       accountRequired: "Выберите счёт.",

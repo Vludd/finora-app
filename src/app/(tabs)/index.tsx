@@ -8,13 +8,10 @@ import { useAccounts } from "@/shared/context/AccountContext";
 import { useCategories } from "@/shared/context/CategoryContext";
 import { useCurrency } from "@/shared/context/CurrencyContext";
 import { useTransactions } from "@/shared/context/TransactionContext";
-import {
-  formatCurrency,
-  formatMonthYear,
-} from "@/shared/lib/format";
-import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
-import type { TransactionType } from "@/shared/transactions/transactionTypes";
+import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import type { TransactionType } from "@/shared/transactions/transactionTypes";
+import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -73,7 +70,8 @@ export default function HomeScreen() {
   const { transactions } = useTransactions();
   const router = useRouter();
   const [balanceVisible, setBalanceVisible] = useState(true);
-  const locale = (i18n.resolvedLanguage ?? i18n.language) === "ru" ? "ru-KZ" : "en-KZ";
+  const locale =
+    (i18n.resolvedLanguage ?? i18n.language) === "ru" ? "ru-KZ" : "en-KZ";
 
   const totalBalance = useMemo(
     () =>
@@ -91,7 +89,8 @@ export default function HomeScreen() {
       (totals, transaction) => {
         if (!transaction.date.startsWith(currentMonth)) return totals;
         if (transaction.type === "income") totals.income += transaction.amount;
-        if (transaction.type === "expense") totals.expense += transaction.amount;
+        if (transaction.type === "expense")
+          totals.expense += transaction.amount;
         return totals;
       },
       { income: 0, expense: 0 },
@@ -119,13 +118,18 @@ export default function HomeScreen() {
     });
   }, [transactions]);
 
-  const weeklyTotal = weeklySpending.reduce((total, item) => total + item.value, 0);
+  const weeklyTotal = weeklySpending.reduce(
+    (total, item) => total + item.value,
+    0,
+  );
   const weeklyMax = Math.max(1, ...weeklySpending.map((item) => item.value));
 
   const recentTransactions = useMemo(
     () =>
       [...transactions]
-        .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
+        .sort(
+          (a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
+        )
         .slice(0, 4),
     [transactions],
   );
@@ -149,25 +153,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="w-full max-w-[560px] self-center px-4 pt-2">
-          <View className="mb-6 flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <View className="h-[43px] w-[43px] items-center justify-center rounded-[15px] border border-accent-muted bg-accent-dark">
-                <Ionicons
-                  name="wallet-outline"
-                  size={23}
-                  color={colors.accent}
-                />
-              </View>
-
-              <View>
-                <Text className="text-[21px] font-extrabold tracking-[-0.6px] text-foreground">
-                  {t("common.appName")}
-                </Text>
-                <Text className="mt-0.5 text-[9px] font-bold tracking-[1.7px] text-subtle">
-                  {t("common.appSlogan")}
-                </Text>
-              </View>
-            </View>
+          <View className="mb-4 flex-row items-center justify-between">
+            <Text className="text-[25px] font-extrabold tracking-[-0.8px] text-foreground">
+              {t("home.title")}
+            </Text>
 
             <View
               className="h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-surface"
@@ -181,16 +170,7 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View className="mb-4">
-            <Text className="text-[25px] font-extrabold tracking-[-0.8px] text-foreground">
-              {t("home.title")}
-            </Text>
-            <Text className="mt-[5px] text-[13px] text-muted">
-              {formatMonthYear(new Date())}
-            </Text>
-          </View>
-
-          <View className="relative mb-3 overflow-hidden rounded-[25px] border border-hero-border bg-hero p-6">
+          <View className="relative overflow-hidden rounded-[25px] border border-hero-border bg-hero p-6">
             <View className="absolute -top-[85px] right-[-45px] h-[220px] w-[220px] rounded-full bg-hero-decoration opacity-60" />
 
             <View className="flex-row items-center justify-between">
@@ -224,9 +204,51 @@ export default function HomeScreen() {
               {formatCurrency(totalBalance, currency, !balanceVisible)}
             </Text>
 
-            <Text className="mt-4 text-xs text-hero-secondary">
-              {t("home.accountsCount", { count: accounts.length })}
-            </Text>
+            <View
+              className="my-2"
+              style={{
+                height: 1,
+                backgroundColor: colors.border,
+                opacity: 1,
+              }}
+            />
+
+            <View className="flex-row gap-3 justify-between pt-4">
+              <SummarySection
+                title={t("home.income")}
+                amount={formatCurrency(
+                  monthTotals.income,
+                  currency,
+                  !balanceVisible,
+                )}
+                period={t("home.thisMonth")}
+                icon="arrow-down-outline"
+                color={colors.accent}
+                iconBackground={colors.incomeSurface}
+              />
+
+              <View
+                className="mx-4"
+                style={{
+                  width: 1,
+                  backgroundColor: colors.border,
+                  opacity: 1,
+                }}
+              />
+
+              <SummarySection
+                title={t("home.expenses")}
+                amount={formatCurrency(
+                  monthTotals.expense,
+                  currency,
+                  !balanceVisible,
+                )}
+                period={t("home.thisMonth")}
+                icon="arrow-up-outline"
+                color={colors.expense}
+                iconBackground={colors.expenseSurface}
+              />
+            </View>
 
             <View className="absolute bottom-[-42px] right-[-5px]">
               <View className="h-[105px] w-[105px] rounded-[53px] border border-hero-line opacity-50" />
@@ -234,60 +256,61 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View className="flex-row gap-3">
-            <SummaryCard
-              title={t("home.income")}
-              amount={formatCurrency(monthTotals.income, currency)}
-              period={t("home.thisMonth")}
-              icon="arrow-down-outline"
-              color={colors.accent}
-              iconBackground={colors.incomeSurface}
-            />
-
-            <SummaryCard
-              title={t("home.expenses")}
-              amount={formatCurrency(monthTotals.expense, currency)}
-              period={t("home.thisMonth")}
-              icon="arrow-up-outline"
-              color={colors.expense}
-              iconBackground={colors.expenseSurface}
-            />
-          </View>
-
-          <View className="mt-8">
-            <Text className="mb-3 text-[17px] font-extrabold tracking-[-0.35px] text-foreground">
+          <View className="mt-4 gap-3">
+            <Text className="mb-1 text-[17px] font-extrabold tracking-[-0.35px] text-foreground">
               {t("home.quickActions")}
             </Text>
 
-            <View className="flex-row gap-2">
-              <QuickAction
-                icon="remove-outline"
-                title={t("home.addExpense")}
-                onPress={() => openQuickTransaction("expense")}
-                contrastText={colors.accentContrastText}
-                accentColor={colors.accent}
-                primary
-              />
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <QuickAction
+                  icon="add-outline"
+                  title={t("home.addIncome")}
+                  onPress={() => openQuickTransaction("income")}
+                  contrastText={colors.accentContrastText}
+                  accentColor={colors.accent}
+                  compact
+                  large
+                  tone="income"
+                  toneColor={colors.income}
+                  toneSurface={colors.incomeSurface}
+                />
+              </View>
 
-              <QuickAction
-                icon="add-outline"
-                title={t("home.addIncome")}
-                onPress={() => openQuickTransaction("income")}
-                contrastText={colors.accentContrastText}
-                accentColor={colors.accent}
-              />
+              <View className="flex-1">
+                <QuickAction
+                  icon="remove-outline"
+                  title={t("home.addExpense")}
+                  onPress={() => openQuickTransaction("expense")}
+                  contrastText={colors.accentContrastText}
+                  accentColor={colors.accent}
+                  compact
+                  large
+                  tone="expense"
+                  toneColor={colors.expense}
+                  toneSurface={colors.expenseSurface}
+                />
+              </View>
+            </View>
 
-              <QuickAction
-                icon="swap-horizontal-outline"
-                title={t("home.transfer")}
-                onPress={() => openQuickTransaction("transfer")}
-                contrastText={colors.accentContrastText}
-                accentColor={colors.accent}
-              />
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <QuickAction
+                  icon="swap-horizontal-outline"
+                  title={t("home.transfer")}
+                  onPress={() => openQuickTransaction("transfer")}
+                  contrastText={colors.accentContrastText}
+                  accentColor={colors.accent}
+                  compact
+                />
+              </View>
+
+              {/* Additional buttons: */}
+              {/* <View className="flex-1"></View> */}
             </View>
           </View>
 
-          <View className="mt-8">
+          <View className="mt-4">
             <View className="mb-3 flex-row items-center justify-between">
               <View>
                 <Text className="text-[17px] font-extrabold tracking-[-0.35px] text-foreground">
@@ -303,7 +326,7 @@ export default function HomeScreen() {
                   {t("home.chartTotal")}
                 </Text>
                 <Text className="mt-1 text-[15px] font-extrabold text-foreground">
-                  {formatCurrency(weeklyTotal, currency)}
+                  {formatCurrency(weeklyTotal, currency, !balanceVisible)}
                 </Text>
               </View>
             </View>
@@ -316,7 +339,10 @@ export default function HomeScreen() {
                       <View
                         className="w-full rounded-[9px]"
                         style={{
-                          height: item.value > 0 ? `${Math.max((item.value / weeklyMax) * 100, 6)}%` : "0%",
+                          height:
+                            item.value > 0
+                              ? `${Math.max((item.value / weeklyMax) * 100, 6)}%`
+                              : "0%",
                           backgroundColor: item.highlighted
                             ? colors.accent
                             : colors.chartBar,
@@ -338,162 +364,13 @@ export default function HomeScreen() {
               </View>
             </View>
           </View>
-
-          <View className="mt-8">
-            <View className="mb-3 flex-row items-center justify-between">
-              <Text className="text-[17px] font-extrabold tracking-[-0.35px] text-foreground">
-                {t("home.recentTransactions")}
-              </Text>
-
-              <Pressable
-                onPress={openTransactions}
-                className="flex-row items-center gap-[2px]"
-                accessibilityRole="button"
-              >
-                <Text className="text-xs font-bold text-accent">
-                  {t("home.viewAll")}
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={15}
-                  color={colors.accent}
-                />
-              </Pressable>
-            </View>
-
-            <View className="rounded-[21px] border border-border bg-surface px-3">
-              {recentTransactions.length > 0 ? (
-                recentTransactions.map((transaction, index) => {
-                  const category = categories.find(
-                    (item) => item.id === transaction.categoryId,
-                  );
-                  const account = accounts.find(
-                    (item) => item.id === transaction.accountId,
-                  );
-                  const toAccount = accounts.find(
-                    (item) => item.id === transaction.toAccountId,
-                  );
-                  const isTransfer = transaction.type === "transfer";
-                  const title = isTransfer
-                    ? `${account?.name ?? t("transactions.unknownAccount")} → ${toAccount?.name ?? t("transactions.unknownAccount")}`
-                    : transaction.note.trim() ||
-                      category?.name ||
-                      t(`transactions.${transaction.type}`);
-                  const dateLabel = getTransactionDateLabel(
-                    transaction.date,
-                    t("dates.today"),
-                    t("dates.yesterday"),
-                    locale,
-                  );
-                  const subtitle = isTransfer
-                    ? transaction.note || t("transactions.transfer")
-                    : `${category?.name ?? t("transactions.uncategorized")} · ${account?.name ?? t("transactions.unknownAccount")}`;
-                  const amountPrefix =
-                    transaction.type === "income"
-                      ? "+"
-                      : transaction.type === "expense"
-                        ? "−"
-                        : "";
-                  const amountLabel = `${amountPrefix}${formatCurrency(transaction.amount, currency)}`;
-                  const iconName = isTransfer
-                    ? "swap-horizontal-outline"
-                    : category?.icon ??
-                      (transaction.type === "income"
-                        ? "trending-up-outline"
-                        : "receipt-outline");
-                  const iconColor = isTransfer
-                    ? colors.accent
-                    : category?.color ??
-                      (transaction.type === "income"
-                        ? colors.income
-                        : colors.expense);
-
-                  return (
-                    <View key={transaction.id}>
-                      <Pressable
-                        onPress={openTransactions}
-                        className="min-h-[76px] flex-row items-center gap-3 px-1 py-2 active:opacity-70"
-                        accessibilityRole="button"
-                        accessibilityLabel={`${title}, ${subtitle}, ${amountLabel}`}
-                      >
-                        <View
-                          className="h-[43px] w-[43px] items-center justify-center rounded-[15px]"
-                          style={{ backgroundColor: `${iconColor}20` }}
-                        >
-                          <Ionicons
-                            name={iconName as IconName}
-                            size={21}
-                            color={iconColor}
-                          />
-                        </View>
-
-                        <View className="min-w-0 flex-1">
-                          <Text numberOfLines={1} className="text-[13px] font-bold text-foreground">
-                            {title}
-                          </Text>
-                          <Text
-                            numberOfLines={1}
-                            className="mt-[5px] text-[10px] text-subtle"
-                          >
-                            {subtitle} · {dateLabel}
-                          </Text>
-                        </View>
-
-                        <Text
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          className="max-w-[116px] text-right text-xs font-extrabold"
-                          style={{
-                            color:
-                              transaction.type === "income"
-                                ? colors.income
-                                : transaction.type === "expense"
-                                  ? colors.expense
-                                  : colors.foreground,
-                          }}
-                        >
-                          {amountLabel}
-                        </Text>
-                      </Pressable>
-
-                      {index < recentTransactions.length - 1 && (
-                        <View className="ml-[55px] h-px bg-border" />
-                      )}
-                    </View>
-                  );
-                })
-              ) : (
-                <View className="items-center px-4 py-7">
-                  <View className="h-12 w-12 items-center justify-center rounded-[16px] bg-accent-dark">
-                    <Ionicons name="receipt-outline" size={23} color={colors.accent} />
-                  </View>
-                  <Text className="mt-3 text-sm font-bold text-foreground">
-                    {t("transactions.emptyTitle")}
-                  </Text>
-                  <Text className="mt-1 text-center text-xs leading-5 text-muted">
-                    {t("transactions.emptyDescription")}
-                  </Text>
-                  <Pressable
-                    onPress={() => openQuickTransaction("expense")}
-                    className="mt-4 rounded-[13px] bg-accent px-4 py-2.5"
-                    accessibilityRole="button"
-                  >
-                    <Text className="text-xs font-bold" style={{ color: colors.accentContrastText }}>
-                      {t("transactions.addTransaction")}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          </View>
-
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function SummaryCard({
+function SummarySection({
   title,
   amount,
   period,
@@ -509,7 +386,7 @@ function SummaryCard({
   iconBackground: string;
 }) {
   return (
-    <View className="min-w-0 flex-1 rounded-[21px] border border-border bg-surface p-4">
+    <View className="flex-1">
       <View className="flex-row items-center gap-2">
         <View
           className="h-[34px] w-[34px] items-center justify-center rounded-xl"
@@ -524,13 +401,11 @@ function SummaryCard({
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
-        className="mt-4 text-[17px] font-extrabold tracking-[-0.4px]"
+        className="mt-2 text-2xl font-extrabold tracking-[-0.4px]"
         style={{ color }}
       >
         {amount}
       </Text>
-
-      <Text className="mt-[5px] text-[11px] text-subtle">{period}</Text>
     </View>
   );
 }
@@ -542,6 +417,11 @@ function QuickAction({
   contrastText,
   accentColor,
   primary = false,
+  compact = false,
+  large = false,
+  tone = "default",
+  toneColor,
+  toneSurface,
 }: {
   icon: IconName;
   title: string;
@@ -549,30 +429,56 @@ function QuickAction({
   contrastText: string;
   accentColor: string;
   primary?: boolean;
+  compact?: boolean;
+  large?: boolean;
+  tone?: "default" | "expense" | "income";
+  toneColor?: string;
+  toneSurface?: string;
 }) {
+  const hasTone = tone !== "default";
+
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      className={`min-h-[90px] min-w-0 flex-1 items-center justify-center gap-2 rounded-[19px] border px-1 py-3 active:opacity-70 ${
-        primary ? "border-accent bg-accent" : "border-border bg-surface"
-      }`}
+      style={
+        hasTone
+          ? {
+              backgroundColor: toneSurface,
+              borderColor: toneColor,
+            }
+          : undefined
+      }
+      className={`min-w-0 flex-row items-center justify-center rounded-[18px] border-0 px-4 active:opacity-70 ${
+        compact
+          ? large
+            ? "min-h-[76px] gap-3 py-3"
+            : "min-h-[58px] gap-3 py-3"
+          : "min-h-[90px] flex-col gap-2 py-3"
+      } ${hasTone ? "" : primary ? "bg-accent" : "bg-surface"}`}
     >
       <View
-        className={`h-[35px] w-[35px] items-center justify-center rounded-xl ${
-          primary ? "bg-accent-contrast" : "bg-accent-dark"
+        style={hasTone ? { backgroundColor: toneColor } : undefined}
+        className={`h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[13px] ${
+          hasTone ? "" : primary ? "bg-accent-contrast" : "bg-accent-dark"
         }`}
       >
         <Ionicons
           name={icon}
           size={21}
-          color={primary ? contrastText : accentColor}
+          color={hasTone ? "#FFFFFF" : primary ? contrastText : accentColor}
         />
       </View>
 
       <Text
-        className={`text-[11px] font-bold ${
-          primary ? "text-accent-contrast-text" : "text-foreground"
+        numberOfLines={1}
+        style={hasTone ? { color: toneColor } : undefined}
+        className={`min-w-0 flex-shrink text-[13px] font-bold ${
+          hasTone
+            ? ""
+            : primary
+              ? "text-accent-contrast-text"
+              : "text-foreground"
         }`}
       >
         {title}

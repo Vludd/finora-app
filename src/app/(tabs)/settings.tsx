@@ -60,6 +60,19 @@ export default function SettingsScreen() {
     );
   });
 
+  const [showAllCurrencies, setShowAllCurrencies] = useState(false);
+
+  const popularCurrencyCodes = ["USD", "EUR", "RUB", "KZT", "CNY"];
+
+  const isSearchingCurrency = currencySearch.trim().length > 0;
+
+  const visibleCurrencies =
+    showAllCurrencies || isSearchingCurrency
+      ? filteredCurrencies
+      : popularCurrencyCodes.flatMap((code) =>
+          filteredCurrencies.filter((item) => item.code === code),
+        );
+
   return (
     <SafeAreaView className="flex-1 bg-background pt-4" edges={["top"]}>
       <ScrollView
@@ -71,6 +84,93 @@ export default function SettingsScreen() {
         <Text className="text-[28px] font-bold text-foreground">
           {t("settings.title")}
         </Text>
+
+        <View className="gap-3 rounded-[20px] border border-border bg-surface p-4">
+          <Text className="text-lg font-semibold text-foreground">
+            {t("settings.language")}
+          </Text>
+          <Text className="text-sm text-muted">
+            {t("settings.languageDescription")}
+          </Text>
+
+          <View className="mt-2 gap-2">
+            {languages.map((language) => {
+              const selected = currentLanguage === language.code;
+
+              return (
+                <Pressable
+                  key={language.code}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  onPress={() => {
+                    void changeAppLanguage(language.code);
+                  }}
+                  className={`min-h-[52px] flex-row items-center justify-between rounded-[14px] border px-3 ${
+                    selected ? "border-accent bg-accent-dark" : "border-border"
+                  }`}
+                >
+                  <Text
+                    className={`text-[15px] font-medium ${
+                      selected ? "text-foreground" : "text-muted"
+                    }`}
+                  >
+                    {language.label}
+                  </Text>
+
+                  <Text
+                    className={`text-lg font-bold text-accent ${
+                      selected ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    ✓
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/accounts")}
+          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
+        >
+          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
+            <Ionicons name="wallet-outline" size={23} color={colors.accent} />
+          </View>
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="text-base font-semibold text-foreground">
+              {t("accounts.title")}
+            </Text>
+            <Text className="text-sm leading-5 text-muted">
+              {t("accounts.description")}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/categories")}
+          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
+        >
+          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
+            <Ionicons
+              name="pricetags-outline"
+              size={23}
+              color={colors.accent}
+            />
+          </View>
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="text-base font-semibold text-foreground">
+              {t("categories.manage.title")}
+            </Text>
+            <Text className="text-sm leading-5 text-muted">
+              {t("categories.manage.description")}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
+        </Pressable>
 
         <View className="gap-4 rounded-[20px] border border-border bg-surface p-4">
           <View className="gap-2">
@@ -199,93 +299,6 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/accounts")}
-          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
-        >
-          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
-            <Ionicons name="wallet-outline" size={23} color={colors.accent} />
-          </View>
-          <View className="min-w-0 flex-1 gap-1">
-            <Text className="text-base font-semibold text-foreground">
-              {t("accounts.title")}
-            </Text>
-            <Text className="text-sm leading-5 text-muted">
-              {t("accounts.description")}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/categories")}
-          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
-        >
-          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
-            <Ionicons
-              name="pricetags-outline"
-              size={23}
-              color={colors.accent}
-            />
-          </View>
-          <View className="min-w-0 flex-1 gap-1">
-            <Text className="text-base font-semibold text-foreground">
-              {t("categories.manage.title")}
-            </Text>
-            <Text className="text-sm leading-5 text-muted">
-              {t("categories.manage.description")}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
-        </Pressable>
-
-        <View className="gap-3 rounded-[20px] border border-border bg-surface p-4">
-          <Text className="text-lg font-semibold text-foreground">
-            {t("settings.language")}
-          </Text>
-          <Text className="text-sm text-muted">
-            {t("settings.languageDescription")}
-          </Text>
-
-          <View className="mt-2 gap-2">
-            {languages.map((language) => {
-              const selected = currentLanguage === language.code;
-
-              return (
-                <Pressable
-                  key={language.code}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => {
-                    void changeAppLanguage(language.code);
-                  }}
-                  className={`min-h-[52px] flex-row items-center justify-between rounded-[14px] border px-3 ${
-                    selected ? "border-accent bg-accent-dark" : "border-border"
-                  }`}
-                >
-                  <Text
-                    className={`text-[15px] font-medium ${
-                      selected ? "text-foreground" : "text-muted"
-                    }`}
-                  >
-                    {language.label}
-                  </Text>
-
-                  <Text
-                    className={`text-lg font-bold text-accent ${
-                      selected ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    ✓
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
         <View className="gap-3 rounded-[20px] border border-border bg-surface p-4">
           <Text className="text-lg font-semibold text-foreground">
             {t("settings.currency")}
@@ -306,7 +319,7 @@ export default function SettingsScreen() {
           />
 
           <View className="mt-2 gap-1">
-            {filteredCurrencies.map((item) => {
+            {visibleCurrencies.map((item) => {
               const selected = currency.code === item.code;
 
               return (
@@ -352,6 +365,26 @@ export default function SettingsScreen() {
               <Text className="text-sm text-muted">
                 {t("settings.noCurrenciesFound")}
               </Text>
+            )}
+
+            {!isSearchingCurrency && filteredCurrencies.length > 5 && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setShowAllCurrencies((prev) => !prev)}
+                className="mt-2 min-h-12 flex-row items-center justify-center gap-2 rounded-[14px] border border-border px-3"
+              >
+                <Text className="text-sm font-semibold text-accent">
+                  {showAllCurrencies
+                    ? "Скрыть дополнительные валюты"
+                    : "Показать все валюты"}
+                </Text>
+
+                <Ionicons
+                  name={showAllCurrencies ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color={colors.accent}
+                />
+              </Pressable>
             )}
           </View>
         </View>
