@@ -7,7 +7,6 @@ import { changeAppLanguage } from "@/i18n";
 import { type AppLanguage } from "@/i18n/resources";
 import { useTheme, type ThemeMode } from "@/shared/theme/ThemeContext";
 import { THEME_PALETTES } from "@/shared/theme/palettes";
-import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 const languages: { code: AppLanguage; label: string }[] = [
   { code: "en", label: "English" },
@@ -46,17 +45,13 @@ export default function SettingsScreen() {
   } = useTheme();
 
   return (
-    <SafeAreaView className="flex-1 bg-background pt-4" edges={["top"]}>
+    <View className="flex-1 bg-background">
       <ScrollView
         className="flex-1"
         contentContainerClassName="gap-6 px-4 pb-8 pt-4"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text className="text-[28px] font-bold text-foreground">
-          {t("settings.title")}
-        </Text>
-
         <View className="gap-3 rounded-[20px] border border-border bg-surface p-4">
           <Text className="text-lg font-semibold text-foreground">
             {t("settings.language")}
@@ -271,6 +266,6 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

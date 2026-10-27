@@ -25,9 +25,10 @@ const ru = {
 
   tabs: {
     home: "Главная",
-    transactions: "Операции",
+    transactions: "История",
     budgets: "Бюджет",
     goals: "Цели",
+    accounts: "Счета",
     settings: "Настройки",
   },
 
@@ -47,7 +48,7 @@ const ru = {
     newLaptop: "Новый ноутбук",
     saved: "Накоплено",
     recentTransactions: "Последние операции",
-    viewAll: "Все операции",
+    viewAll: "Вся история",
     monthlyChange: "за месяц",
     demoNotice: "Демонстрационные данные. Операции пока не сохраняются.",
     previousMonth: "к прошлому месяцу",
@@ -77,7 +78,7 @@ const ru = {
   },
 
   transactions: {
-    title: "Операции",
+    title: "История",
     description: "Доходы, расходы и переводы между счетами.",
     editorDescription: "Заполните сумму и детали операции.",
     addTransaction: "Добавить операцию",

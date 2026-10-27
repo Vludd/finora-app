@@ -25,9 +25,10 @@ const en = {
 
   tabs: {
     home: "Home",
-    transactions: "Activity",
+    transactions: "History",
     budgets: "Budget",
     goals: "Goals",
+    accounts: "Accounts",
     settings: "Settings",
   },
 
@@ -47,7 +48,7 @@ const en = {
     newLaptop: "New laptop",
     saved: "Saved",
     recentTransactions: "Recent transactions",
-    viewAll: "All transactions",
+    viewAll: "All history",
     monthlyChange: "this month",
     demoNotice: "Demo data. Transactions are not saved yet.",
     previousMonth: "vs. last month",
@@ -77,7 +78,7 @@ const en = {
   },
 
   transactions: {
-    title: "Activity",
+    title: "History",
     description: "Income, expenses, and transfers between accounts.",
     editorDescription: "Enter the amount and transaction details.",
     addTransaction: "Add transaction",

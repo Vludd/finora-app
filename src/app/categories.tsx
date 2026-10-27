@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +22,7 @@ import type {
 } from "@/shared/categories/categoryTypes";
 import { useCategories } from "@/shared/context/CategoryContext";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import AppHeader from "@/shared/ui/AppHeader";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 const categoryIcons: CategoryIcon[] = [
@@ -111,7 +111,6 @@ const categoryColors = [
 
 export default function CategoriesScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { categories, addCategory, updateCategory, deleteCategory } =
@@ -411,34 +410,17 @@ export default function CategoriesScreen() {
   );
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-background pt-3"
-      edges={["top", "bottom"]}
-    >
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="gap-5 px-4 pb-10 pt-3"
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="flex-row items-center gap-3">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
-            onPress={() => router.back()}
-            className="h-11 w-11 items-center justify-center rounded-[15px] border border-border bg-surface"
-          >
-            <Ionicons name="arrow-back" size={21} color={colors.foreground} />
-          </Pressable>
-
-          <View className="min-w-0 flex-1">
-            <Text className="text-[25px] font-extrabold tracking-[-0.6px] text-foreground">
-              {t("categories.manage.title")}
-            </Text>
-            <Text className="mt-1 text-sm leading-5 text-muted">
-              {t("categories.manage.description")}
-            </Text>
-          </View>
-        </View>
+    <>
+      <AppHeader title={t("categories.manage.title")} showBackButton />
+      <SafeAreaView className="flex-1 bg-background" edges={["bottom"]}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5 px-4 pb-10 pt-4"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text className="text-sm leading-5 text-muted">
+            {t("categories.manage.description")}
+          </Text>
 
         <View className="flex-row gap-3">
           <TypeTab
@@ -614,7 +596,8 @@ export default function CategoriesScreen() {
           </KeyboardAvoidingView>
         </Modal>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 }
 

@@ -30,7 +30,6 @@ import type {
   TransactionDraft,
   TransactionType,
 } from "@/shared/transactions/transactionTypes";
-import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 type FilterType = "all" | "income" | "expense" | "transfer";
 
@@ -369,30 +368,16 @@ export default function TransactionsScreen() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-background pt-3" edges={["top"]}>
+    <View className="flex-1 bg-background">
       <ScrollView
         className="flex-1"
-        contentContainerClassName="gap-5 px-4 pb-8 pt-3"
+        contentContainerClassName="gap-5 px-4 pb-8 pt-4"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="flex-row items-center justify-between gap-3">
-          <View className="min-w-0 flex-1">
-            <Text className="text-[27px] font-extrabold tracking-[-0.7px] text-foreground">
-              {t("transactions.title")}
-            </Text>
-            <Text className="mt-1 text-sm text-muted">
-              {t("transactions.description")}
-            </Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => openCreateEditor()}
-            className="h-12 w-12 items-center justify-center rounded-[16px] bg-accent"
-          >
-            <Ionicons name="add" size={27} color={colors.accentContrastText} />
-          </Pressable>
-        </View>
+        <Text className="text-sm text-muted">
+          {t("transactions.description")}
+        </Text>
 
         <View className="flex-row gap-3">
           <View className="min-w-0 flex-1 rounded-[18px] border border-border bg-surface p-3">
@@ -439,21 +424,35 @@ export default function TransactionsScreen() {
           </View>
         </View>
 
-        <View className="h-[48px] flex-row items-center gap-2 rounded-[15px] border border-border bg-surface px-3">
-          <Ionicons name="search-outline" size={20} color={colors.subtle} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={t("transactions.searchPlaceholder")}
-            placeholderTextColor={colors.subtle}
-            className="min-w-0 flex-1 py-0 text-sm text-foreground"
-            returnKeyType="search"
-          />
-          {search.length > 0 ? (
-            <Pressable onPress={() => setSearch("")} hitSlop={8}>
-              <Ionicons name="close-circle" size={19} color={colors.subtle} />
-            </Pressable>
-          ) : null}
+        <View className="flex-row items-center gap-2">
+          <View className="h-[48px] min-w-0 flex-1 flex-row items-center gap-2 rounded-[15px] border border-border bg-surface px-3">
+            <Ionicons name="search-outline" size={20} color={colors.subtle} />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder={t("transactions.searchPlaceholder")}
+              placeholderTextColor={colors.subtle}
+              className="min-w-0 flex-1 py-0 text-sm text-foreground"
+              returnKeyType="search"
+            />
+            {search.length > 0 ? (
+              <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                <Ionicons name="close-circle" size={19} color={colors.subtle} />
+              </Pressable>
+            ) : null}
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("transactions.addTransaction")}
+            onPress={() => openCreateEditor()}
+            className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent"
+          >
+            <Ionicons
+              name="add"
+              size={25}
+              color={colors.accentContrastText}
+            />
+          </Pressable>
         </View>
 
         <ScrollView
@@ -1046,6 +1045,6 @@ export default function TransactionsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -32,6 +31,7 @@ import {
 import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
 import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
+import AppHeader from "@/shared/ui/AppHeader";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 const accountIcons: AccountIcon[] = [
@@ -130,9 +130,12 @@ const accountTypes: {
   { value: "deposit", icon: "trending-up-outline", color: "#8B5CF6" },
 ];
 
-export default function AccountsScreen() {
+type AccountsScreenProps = { showBackButton?: boolean };
+
+export default function AccountsScreen({
+  showBackButton = true,
+}: AccountsScreenProps) {
   const { t, i18n } = useTranslation();
-  const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts();
@@ -560,33 +563,19 @@ export default function AccountsScreen() {
   );
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-background pt-3"
-      edges={["top", "bottom"]}
-    >
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="gap-5 px-4 pb-10 pt-3"
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="flex-row items-center gap-3">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
-            onPress={() => router.back()}
-            className="h-11 w-11 items-center justify-center rounded-[15px] border border-border bg-surface"
-          >
-            <Ionicons name="arrow-back" size={21} color={colors.foreground} />
-          </Pressable>
-          <View className="min-w-0 flex-1">
-            <Text className="text-[25px] font-extrabold tracking-[-0.6px] text-foreground">
-              {t("accounts.title")}
-            </Text>
-            <Text className="mt-1 text-sm leading-5 text-muted">
-              {t("accounts.description")}
-            </Text>
-          </View>
-        </View>
+    <>
+      {showBackButton ? (
+        <AppHeader title={t("accounts.title")} showBackButton />
+      ) : null}
+      <SafeAreaView className="flex-1 bg-background" edges={["bottom"]}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5 px-4 pb-10 pt-4"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text className="text-sm leading-5 text-muted">
+            {t("accounts.description")}
+          </Text>
 
         <View className="flex-row flex-wrap gap-2">
           {accountTypes.map((type) => (
@@ -768,6 +757,7 @@ export default function AccountsScreen() {
           </KeyboardAvoidingView>
         </Modal>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 }

@@ -16,7 +16,6 @@ import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
 import type { TransactionType } from "@/shared/transactions/transactionTypes";
 import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
-import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type WeekdayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
@@ -208,30 +207,13 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background pt-4" edges={["top"]}>
+    <View className="flex-1 bg-background">
       <ScrollView
         className="flex-1"
-        contentContainerClassName="pb-6"
+        contentContainerClassName="pb-6 pt-4"
         showsVerticalScrollIndicator={false}
       >
-        <View className="w-full max-w-[560px] self-center px-4 pt-2">
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-[25px] font-extrabold tracking-[-0.8px] text-foreground">
-              {t("home.title")}
-            </Text>
-
-            <View
-              className="h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-surface"
-              accessibilityLabel={t("common.notifications")}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={21}
-                color={colors.foreground}
-              />
-            </View>
-          </View>
-
+        <View className="w-full max-w-[560px] self-center px-4">
           <View className="relative overflow-hidden rounded-[25px] border border-hero-border bg-hero p-6">
             <View className="absolute -top-[85px] right-[-45px] h-[220px] w-[220px] rounded-full bg-hero-decoration opacity-60" />
 
@@ -472,7 +454,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
