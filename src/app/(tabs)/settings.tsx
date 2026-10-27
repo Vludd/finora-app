@@ -5,8 +5,11 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { changeAppLanguage } from "@/i18n";
 import { type AppLanguage } from "@/i18n/resources";
-import { useTheme, type ThemeMode } from "@/shared/theme/ThemeContext";
+import { useCurrency } from "@/shared/context/CurrencyContext";
+import { CURRENCIES } from "@/shared/lib/currencies";
 import { THEME_PALETTES } from "@/shared/theme/palettes";
+import { useTheme, type ThemeMode } from "@/shared/theme/ThemeContext";
+import CurrencyPicker from "@/shared/ui/CurrencyPicker";
 
 const languages: { code: AppLanguage; label: string }[] = [
   { code: "en", label: "English" },
@@ -43,6 +46,7 @@ export default function SettingsScreen() {
     setThemeMode,
     setPalette,
   } = useTheme();
+  const { currencyCode, setCurrencyCode } = useCurrency();
 
   return (
     <View className="flex-1 bg-background">
@@ -97,47 +101,22 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/accounts")}
-          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
-        >
-          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
-            <Ionicons name="wallet-outline" size={23} color={colors.accent} />
-          </View>
-          <View className="min-w-0 flex-1 gap-1">
-            <Text className="text-base font-semibold text-foreground">
-              {t("accounts.title")}
+        <View className="gap-3 rounded-[20px] border border-border bg-surface p-4">
+          <View className="gap-1">
+            <Text className="text-lg font-semibold text-foreground">
+              {t("settings.primaryCurrency")}
             </Text>
             <Text className="text-sm leading-5 text-muted">
-              {t("accounts.description")}
+              {t("settings.primaryCurrencyDescription")}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/categories")}
-          className="flex-row items-center gap-3 rounded-[20px] border border-border bg-surface p-4"
-        >
-          <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent-dark">
-            <Ionicons
-              name="pricetags-outline"
-              size={23}
-              color={colors.accent}
-            />
-          </View>
-          <View className="min-w-0 flex-1 gap-1">
-            <Text className="text-base font-semibold text-foreground">
-              {t("categories.manage.title")}
-            </Text>
-            <Text className="text-sm leading-5 text-muted">
-              {t("categories.manage.description")}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.subtle} />
-        </Pressable>
+          <CurrencyPicker
+            value={currencyCode}
+            onChange={setCurrencyCode}
+            options={CURRENCIES}
+            title={t("settings.primaryCurrency")}
+          />
+        </View>
 
         <View className="gap-4 rounded-[20px] border border-border bg-surface p-4">
           <View className="gap-2">

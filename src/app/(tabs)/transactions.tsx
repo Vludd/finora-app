@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { vars } from "nativewind";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Category } from "@/shared/categories/categoryTypes";
 import { useAccounts } from "@/shared/context/AccountContext";
 import { useCategories } from "@/shared/context/CategoryContext";
+import { useCurrency } from "@/shared/context/CurrencyContext";
 import { useTransactions } from "@/shared/context/TransactionContext";
 import {
   DEFAULT_CURRENCY_CODE,
@@ -25,6 +27,7 @@ import {
 } from "@/shared/lib/currencies";
 import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import type {
   Transaction,
   TransactionDraft,
@@ -82,6 +85,7 @@ export default function TransactionsScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { accounts } = useAccounts();
+  const { currencyCode } = useCurrency();
   const { categories } = useCategories();
   const { transactions, addTransaction, updateTransaction, deleteTransaction } =
     useTransactions();
@@ -118,75 +122,72 @@ export default function TransactionsScreen() {
     selectedAccount.currencyCode !== selectedToAccount.currencyCode,
   );
 
-  const monthTotals = useMemo<
-    Record<string, { income: number; expense: number }>
-  >(() => {
+  const monthTotals = useMemo(() => {
     const month = localDateString().slice(0, 7);
-    const totals: Record<string, { income: number; expense: number }> = {};
+    const totals = { income: 0, expense: 0 };
+
     for (const transaction of transactions) {
       if (
         !transaction.date.startsWith(month) ||
         transaction.type === "transfer"
-      )
+      ) {
         continue;
+      }
+
       const account = accounts.find(
         (item) => item.id === transaction.accountId,
       );
-      if (!account) continue;
-      const currencyCode = account.currencyCode ?? DEFAULT_CURRENCY_CODE;
-      totals[currencyCode] ??= { income: 0, expense: 0 };
-      if (transaction.type === "income")
-        totals[currencyCode].income += transaction.amount;
-      if (transaction.type === "expense")
-        totals[currencyCode].expense += transaction.amount;
+      if (
+        !account ||
+        (account.currencyCode ?? DEFAULT_CURRENCY_CODE) !== currencyCode
+      ) {
+        continue;
+      }
+
+      if (transaction.type === "income") totals.income += transaction.amount;
+      if (transaction.type === "expense") totals.expense += transaction.amount;
     }
+
     return totals;
-  }, [transactions, accounts]);
+  }, [transactions, accounts, currencyCode]);
 
-  const monthTotalEntries = Object.entries(monthTotals) as [
-    string,
-    { income: number; expense: number },
-  ][];
-
-  const monthIncomeDisplay = monthTotalEntries
-    .filter(([, totals]) => totals.income > 0)
-    .map(
-      ([code, totals]) =>
-        `${formatCurrency(totals.income, getCurrencyByCode(code))}${Object.keys(monthTotals).length > 1 ? ` · ${code}` : ""}`,
-    );
-  const monthExpenseDisplay = monthTotalEntries
-    .filter(([, totals]) => totals.expense > 0)
-    .map(
-      ([code, totals]) =>
-        `${formatCurrency(totals.expense, getCurrencyByCode(code))}${Object.keys(monthTotals).length > 1 ? ` · ${code}` : ""}`,
-    );
-
-  const zeroCurrencyCodes = [
-    ...new Set(
-      accounts.map((account) => account.currencyCode ?? DEFAULT_CURRENCY_CODE),
-    ),
-  ];
-
-  if (zeroCurrencyCodes.length === 0) {
-    zeroCurrencyCodes.push(DEFAULT_CURRENCY_CODE);
-  }
-
-  const zeroAmountDisplay = zeroCurrencyCodes
-    .map(
-      (code) =>
-        `${formatCurrency(0, getCurrencyByCode(code))}${
-          zeroCurrencyCodes.length > 1 ? ` · ${code}` : ""
-        }`,
-    )
-    .join("\n");
+  const selectedCurrency = getCurrencyByCode(currencyCode);
+  const monthIncomeDisplay = formatCurrency(
+    monthTotals.income,
+    selectedCurrency,
+  );
+  const monthExpenseDisplay = formatCurrency(
+    monthTotals.expense,
+    selectedCurrency,
+  );
+  const zeroAmountDisplay = formatCurrency(0, selectedCurrency);
 
   const visibleTransactions = useMemo(() => {
     const query = search.trim().toLocaleLowerCase(locale);
+
     return [...transactions]
-      .filter(
-        (transaction) =>
-          activeFilter === "all" || transaction.type === activeFilter,
-      )
+      .filter((transaction) => {
+        const account = accounts.find(
+          (item) => item.id === transaction.accountId,
+        );
+        const toAccount = accounts.find(
+          (item) => item.id === transaction.toAccountId,
+        );
+        const sourceCurrency = account?.currencyCode ?? DEFAULT_CURRENCY_CODE;
+        const destinationCurrency =
+          toAccount?.currencyCode ?? DEFAULT_CURRENCY_CODE;
+
+        const matchesCurrency =
+          transaction.type === "transfer"
+            ? sourceCurrency === currencyCode ||
+              Boolean(toAccount && destinationCurrency === currencyCode)
+            : sourceCurrency === currencyCode;
+
+        return (
+          matchesCurrency &&
+          (activeFilter === "all" || transaction.type === activeFilter)
+        );
+      })
       .filter((transaction) => {
         if (!query) return true;
         const account = accounts.find(
@@ -206,7 +207,15 @@ export default function TransactionsScreen() {
         ].some((value) => value?.toLocaleLowerCase(locale).includes(query));
       })
       .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
-  }, [transactions, activeFilter, search, locale, accounts, categories]);
+  }, [
+    transactions,
+    activeFilter,
+    search,
+    locale,
+    accounts,
+    categories,
+    currencyCode,
+  ]);
 
   const openCreateEditor = useCallback(
     (type: TransactionType = "expense") => {
@@ -218,8 +227,15 @@ export default function TransactionsScreen() {
       setDraftType(type);
       setDraftAmount("");
       setDraftToAmount("");
-      setDraftAccountId(accounts[0]?.id ?? "");
-      setDraftToAccountId(accounts[1]?.id ?? "");
+      const preferredAccount = accounts.find(
+        (account) =>
+          (account.currencyCode ?? DEFAULT_CURRENCY_CODE) === currencyCode,
+      );
+      const sourceAccount = preferredAccount ?? accounts[0];
+      setDraftAccountId(sourceAccount?.id ?? "");
+      setDraftToAccountId(
+        accounts.find((account) => account.id !== sourceAccount?.id)?.id ?? "",
+      );
       setDraftCategoryId(
         categories.find((category) => category.type === type)?.id ?? "",
       );
@@ -228,7 +244,7 @@ export default function TransactionsScreen() {
       setFormError("");
       setEditorVisible(true);
     },
-    [accounts, categories, router],
+    [accounts, categories, router, currencyCode],
   );
 
   useEffect(() => {
@@ -375,9 +391,14 @@ export default function TransactionsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text className="text-sm text-muted">
-          {t("transactions.description")}
-        </Text>
+        <View className="gap-1">
+          <Text className="text-sm text-muted">
+            {t("transactions.description")}
+          </Text>
+          <Text className="text-xs font-semibold text-subtle">
+            {t("transactions.currencyFilter", { currency: currencyCode })}
+          </Text>
+        </View>
 
         <View className="flex-row gap-3">
           <View className="min-w-0 flex-1 rounded-[18px] border border-border bg-surface p-3">
@@ -396,9 +417,7 @@ export default function TransactionsScreen() {
               adjustsFontSizeToFit
               className="text-base font-extrabold text-foreground"
             >
-              {monthIncomeDisplay.length > 0
-                ? monthIncomeDisplay.join("\n")
-                : zeroAmountDisplay}
+              {monthTotals.income > 0 ? monthIncomeDisplay : zeroAmountDisplay}
             </Text>
           </View>
           <View className="min-w-0 flex-1 rounded-[18px] border border-border bg-surface p-3">
@@ -417,8 +436,8 @@ export default function TransactionsScreen() {
               adjustsFontSizeToFit
               className="text-base font-extrabold text-foreground"
             >
-              {monthExpenseDisplay.length > 0
-                ? monthExpenseDisplay.join("\n")
+              {monthTotals.expense > 0
+                ? monthExpenseDisplay
                 : zeroAmountDisplay}
             </Text>
           </View>
@@ -447,11 +466,7 @@ export default function TransactionsScreen() {
             onPress={() => openCreateEditor()}
             className="h-12 w-12 items-center justify-center rounded-[15px] bg-accent"
           >
-            <Ionicons
-              name="add"
-              size={25}
-              color={colors.accentContrastText}
-            />
+            <Ionicons name="add" size={25} color={colors.accentContrastText} />
           </Pressable>
         </View>
 
@@ -525,16 +540,26 @@ export default function TransactionsScreen() {
                   : transaction.type === "expense"
                     ? "−"
                     : "";
-              const amountColor =
-                transaction.type === "income"
-                  ? colors.income
-                  : transaction.type === "expense"
+              const sourceMatchesCurrency =
+                sourceCurrency.code === currencyCode;
+              const destinationMatchesCurrency =
+                Boolean(toAccount) && destinationCurrency.code === currencyCode;
+              const amountColor = isTransfer
+                ? sourceMatchesCurrency && destinationMatchesCurrency
+                  ? colors.foreground
+                  : sourceMatchesCurrency
                     ? colors.expense
-                    : colors.foreground;
-              const amountLabel =
-                isTransfer && sourceCurrency.code !== destinationCurrency.code
+                    : colors.income
+                : transaction.type === "income"
+                  ? colors.income
+                  : colors.expense;
+              const amountLabel = isTransfer
+                ? sourceMatchesCurrency && destinationMatchesCurrency
                   ? `−${formatCurrency(transaction.amount, sourceCurrency)} → +${formatCurrency(transaction.toAmount ?? transaction.amount, destinationCurrency)}`
-                  : `${amountPrefix}${formatCurrency(transaction.amount, sourceCurrency)}`;
+                  : sourceMatchesCurrency
+                    ? `−${formatCurrency(transaction.amount, sourceCurrency)}`
+                    : `+${formatCurrency(transaction.toAmount ?? transaction.amount, destinationCurrency)}`
+                : `${amountPrefix}${formatCurrency(transaction.amount, sourceCurrency)}`;
 
               return (
                 <Pressable
@@ -657,6 +682,7 @@ export default function TransactionsScreen() {
         <KeyboardAvoidingView
           className="flex-1 justify-end bg-black/50"
           behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={vars(getThemeCssVariables(colors))}
         >
           <View
             className="max-h-[92%] rounded-t-[26px] border border-border bg-background"

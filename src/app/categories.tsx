@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { vars } from "nativewind";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -22,6 +23,7 @@ import type {
 } from "@/shared/categories/categoryTypes";
 import { useCategories } from "@/shared/context/CategoryContext";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import AppHeader from "@/shared/ui/AppHeader";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
 
@@ -422,180 +424,181 @@ export default function CategoriesScreen() {
             {t("categories.manage.description")}
           </Text>
 
-        <View className="flex-row gap-3">
-          <TypeTab
-            label={t("categories.manage.expense")}
-            count={expenseCount}
-            icon="arrow-up-outline"
-            selected={activeType === "expense"}
-            color={colors.expense}
-            onPress={() => setActiveType("expense")}
-          />
-          <TypeTab
-            label={t("categories.manage.income")}
-            count={incomeCount}
-            icon="arrow-down-outline"
-            selected={activeType === "income"}
-            color={colors.income}
-            onPress={() => setActiveType("income")}
-          />
-        </View>
+          <View className="flex-row gap-3">
+            <TypeTab
+              label={t("categories.manage.expense")}
+              count={expenseCount}
+              icon="arrow-up-outline"
+              selected={activeType === "expense"}
+              color={colors.expense}
+              onPress={() => setActiveType("expense")}
+            />
+            <TypeTab
+              label={t("categories.manage.income")}
+              count={incomeCount}
+              icon="arrow-down-outline"
+              selected={activeType === "income"}
+              color={colors.income}
+              onPress={() => setActiveType("income")}
+            />
+          </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={openCreateEditor}
-          className="min-h-[58px] flex-row items-center justify-center gap-2 rounded-[17px] bg-accent px-4"
-        >
-          <Ionicons
-            name="add-circle-outline"
-            size={22}
-            color={colors.accentContrastText}
-          />
-          <Text
-            className="text-[15px] font-bold"
-            style={{ color: colors.accentContrastText }}
+          <Pressable
+            accessibilityRole="button"
+            onPress={openCreateEditor}
+            className="min-h-[58px] flex-row items-center justify-center gap-2 rounded-[17px] bg-accent px-4"
           >
-            {t("categories.manage.addCategory")}
-          </Text>
-        </Pressable>
+            <Ionicons
+              name="add-circle-outline"
+              size={22}
+              color={colors.accentContrastText}
+            />
+            <Text
+              className="text-[15px] font-bold"
+              style={{ color: colors.accentContrastText }}
+            >
+              {t("categories.manage.addCategory")}
+            </Text>
+          </Pressable>
 
-        {visibleCategories.length > 0 ? (
-          <View className="flex-row flex-wrap justify-between gap-y-3">
-            {visibleCategories.map((category) => (
-              <View
-                key={category.id}
-                className="w-[48.5%] rounded-[19px] border border-border bg-surface p-3"
-              >
-                <View className="flex-row items-start justify-between gap-2">
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t("common.edit")}: ${category.name}`}
-                    onPress={() => openEditEditor(category)}
-                    className="h-12 w-12 items-center justify-center rounded-[16px]"
-                    style={{ backgroundColor: `${category.color}20` }}
-                  >
-                    <Ionicons
-                      name={category.icon}
-                      size={24}
-                      color={category.color}
-                    />
-                  </Pressable>
-
-                  <View className="flex-row gap-1">
+          {visibleCategories.length > 0 ? (
+            <View className="flex-row flex-wrap justify-between gap-y-3">
+              {visibleCategories.map((category) => (
+                <View
+                  key={category.id}
+                  className="w-[48.5%] rounded-[19px] border border-border bg-surface p-3"
+                >
+                  <View className="flex-row items-start justify-between gap-2">
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`${t("common.edit")}: ${category.name}`}
-                      hitSlop={5}
                       onPress={() => openEditEditor(category)}
-                      className="h-8 w-8 items-center justify-center rounded-[10px]"
+                      className="h-12 w-12 items-center justify-center rounded-[16px]"
+                      style={{ backgroundColor: `${category.color}20` }}
                     >
                       <Ionicons
-                        name="create-outline"
-                        size={18}
-                        color={colors.muted}
+                        name={category.icon}
+                        size={24}
+                        color={category.color}
                       />
                     </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t("common.delete")}: ${category.name}`}
-                      hitSlop={5}
-                      onPress={() => confirmDelete(category)}
-                      className="h-8 w-8 items-center justify-center rounded-[10px]"
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={17}
-                        color={colors.subtle}
-                      />
-                    </Pressable>
-                  </View>
-                </View>
 
-                <Text
-                  className="mt-3 min-h-[40px] text-[14px] font-bold leading-5 text-foreground"
-                  numberOfLines={2}
-                >
-                  {category.name}
-                </Text>
-                <View
-                  className="mt-2 h-[3px] w-10 rounded-full"
-                  style={{ backgroundColor: category.color }}
+                    <View className="flex-row gap-1">
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t("common.edit")}: ${category.name}`}
+                        hitSlop={5}
+                        onPress={() => openEditEditor(category)}
+                        className="h-8 w-8 items-center justify-center rounded-[10px]"
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={18}
+                          color={colors.muted}
+                        />
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t("common.delete")}: ${category.name}`}
+                        hitSlop={5}
+                        onPress={() => confirmDelete(category)}
+                        className="h-8 w-8 items-center justify-center rounded-[10px]"
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={17}
+                          color={colors.subtle}
+                        />
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  <Text
+                    className="mt-3 min-h-[40px] text-[14px] font-bold leading-5 text-foreground"
+                    numberOfLines={2}
+                  >
+                    {category.name}
+                  </Text>
+                  <View
+                    className="mt-2 h-[3px] w-10 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View className="items-center rounded-[20px] border border-border bg-surface px-6 py-8">
+              <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-accent-dark">
+                <Ionicons
+                  name="pricetags-outline"
+                  size={26}
+                  color={colors.accent}
                 />
               </View>
-            ))}
-          </View>
-        ) : (
-          <View className="items-center rounded-[20px] border border-border bg-surface px-6 py-8">
-            <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-accent-dark">
-              <Ionicons
-                name="pricetags-outline"
-                size={26}
-                color={colors.accent}
-              />
+              <Text className="mt-4 text-center text-base font-bold text-foreground">
+                {t("categories.manage.emptyTitle")}
+              </Text>
+              <Text className="mt-2 text-center text-sm leading-5 text-muted">
+                {t("categories.manage.emptyDescription")}
+              </Text>
             </View>
-            <Text className="mt-4 text-center text-base font-bold text-foreground">
-              {t("categories.manage.emptyTitle")}
-            </Text>
-            <Text className="mt-2 text-center text-sm leading-5 text-muted">
-              {t("categories.manage.emptyDescription")}
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
 
-      {Platform.OS === "web" ? (
-        editorVisible && (
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              zIndex: 1000,
-              justifyContent: "flex-end",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-            }}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("common.close")}
-              onPress={() => setEditorVisible(false)}
+        {Platform.OS === "web" ? (
+          editorVisible && (
+            <View
               style={{
                 position: "absolute",
                 top: 0,
                 right: 0,
                 bottom: 0,
                 left: 0,
-              }}
-            />
-            <KeyboardAvoidingView
-              style={{
-                maxHeight: "100%",
+                zIndex: 1000,
                 justifyContent: "flex-end",
-                zIndex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
               }}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("common.close")}
+                onPress={() => setEditorVisible(false)}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                }}
+              />
+              <KeyboardAvoidingView
+                style={{
+                  maxHeight: "100%",
+                  justifyContent: "flex-end",
+                  zIndex: 1,
+                }}
+              >
+                {editorSheet}
+              </KeyboardAvoidingView>
+            </View>
+          )
+        ) : (
+          <Modal
+            visible={editorVisible}
+            transparent
+            animationType="slide"
+            statusBarTranslucent
+            onRequestClose={() => setEditorVisible(false)}
+          >
+            <KeyboardAvoidingView
+              className="flex-1 justify-end bg-black/50"
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              style={vars(getThemeCssVariables(colors))}
             >
               {editorSheet}
             </KeyboardAvoidingView>
-          </View>
-        )
-      ) : (
-        <Modal
-          visible={editorVisible}
-          transparent
-          animationType="slide"
-          statusBarTranslucent
-          onRequestClose={() => setEditorVisible(false)}
-        >
-          <KeyboardAvoidingView
-            className="flex-1 justify-end bg-black/50"
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-          >
-            {editorSheet}
-          </KeyboardAvoidingView>
-        </Modal>
-      )}
+          </Modal>
+        )}
       </SafeAreaView>
     </>
   );

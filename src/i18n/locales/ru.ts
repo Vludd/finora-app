@@ -80,6 +80,7 @@ const ru = {
   transactions: {
     title: "История",
     description: "Доходы, расходы и переводы между счетами.",
+    currencyFilter: "Показаны только операции в валюте {{currency}}.",
     editorDescription: "Заполните сумму и детали операции.",
     addTransaction: "Добавить операцию",
     editTransaction: "Изменить операцию",
@@ -134,6 +135,13 @@ const ru = {
     remaining: "Осталось",
     overLimit: "Превышение лимита",
     categories: "Категории",
+    categorySettingsTitle: "Категории расходов",
+    categorySettingsDescription:
+      "Настройте названия, значки и цвета категорий, которые используете в бюджете.",
+    manageCategories: "Настроить категории",
+    expenseCategories: "Категории расходов",
+    categoryCount: "{{count}} шт.",
+    noExpenseCategories: "Категорий расходов пока нет",
     createBudget: "Создать бюджет",
     editBudget: "Изменить бюджет",
     noBudgets: "Бюджетов пока нет",
@@ -269,6 +277,9 @@ const ru = {
 
   settings: {
     title: "Настройки",
+    primaryCurrency: "Основная валюта",
+    primaryCurrencyDescription:
+      "Используется для баланса, сводной статистики и фильтрации операций. Конвертация между валютами не выполняется.",
     language: "Язык приложения",
     languageDescription: "Выберите язык интерфейса.",
     appearance: "Внешний вид",

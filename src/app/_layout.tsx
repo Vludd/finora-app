@@ -12,26 +12,38 @@ import { colors as defaultColors } from "@/constants/theme";
 import { initializeI18n } from "@/i18n";
 import type { Account } from "@/shared/accounts/accountTypes";
 import type { Category } from "@/shared/categories/categoryTypes";
-import type { Transaction } from "@/shared/transactions/transactionTypes";
-import { AccountProvider, loadSavedAccounts } from "@/shared/context/AccountContext";
-import { loadLegacyCurrencyCode } from "@/shared/context/CurrencyContext";
-import { TransactionProvider, loadSavedTransactions } from "@/shared/context/TransactionContext";
+import {
+  AccountProvider,
+  loadSavedAccounts,
+} from "@/shared/context/AccountContext";
 import {
   CategoryProvider,
   loadSavedCategories,
 } from "@/shared/context/CategoryContext";
+import {
+  CurrencyProvider,
+  loadLegacyCurrencyCode,
+  loadSavedPreferredCurrencyCode,
+} from "@/shared/context/CurrencyContext";
+import {
+  loadSavedTransactions,
+  TransactionProvider,
+} from "@/shared/context/TransactionContext";
+import type { CurrencyCode } from "@/shared/lib/currencies";
 import {
   loadSavedThemeSettings,
   ThemeProvider,
   useTheme,
   type ThemeSettings,
 } from "@/shared/theme/ThemeContext";
+import type { Transaction } from "@/shared/transactions/transactionTypes";
 
 type InitialAppState = {
   themeSettings: ThemeSettings;
   categories: Category[];
   accounts: Account[];
   transactions: Transaction[];
+  preferredCurrencyCode: CurrencyCode;
 };
 
 function AppNavigator() {
@@ -113,15 +125,24 @@ export default function RootLayout() {
       }
 
       const legacyCurrencyCode = await loadLegacyCurrencyCode();
-      const [themeSettings, categories, accounts, transactions] = await Promise.all([
-        loadSavedThemeSettings(),
-        loadSavedCategories(),
-        loadSavedAccounts(legacyCurrencyCode),
-        loadSavedTransactions(),
-      ]);
+      const preferredCurrencyCode =
+        await loadSavedPreferredCurrencyCode(legacyCurrencyCode);
+      const [themeSettings, categories, accounts, transactions] =
+        await Promise.all([
+          loadSavedThemeSettings(),
+          loadSavedCategories(),
+          loadSavedAccounts(legacyCurrencyCode),
+          loadSavedTransactions(),
+        ]);
 
       if (active) {
-        setInitialState({ themeSettings, categories, accounts, transactions });
+        setInitialState({
+          themeSettings,
+          categories,
+          accounts,
+          transactions,
+          preferredCurrencyCode,
+        });
       }
     }
 
@@ -144,17 +165,19 @@ export default function RootLayout() {
   }
 
   return (
-    <TransactionProvider initialTransactions={initialState.transactions}>
-      <AccountProvider initialAccounts={initialState.accounts}>
-        <CategoryProvider initialCategories={initialState.categories}>
-          <ThemeProvider
-            mode={initialState.themeSettings.mode}
-            paletteId={initialState.themeSettings.paletteId}
-          >
-            <AppNavigator />
-          </ThemeProvider>
-        </CategoryProvider>
-      </AccountProvider>
-    </TransactionProvider>
+    <CurrencyProvider initialCurrencyCode={initialState.preferredCurrencyCode}>
+      <TransactionProvider initialTransactions={initialState.transactions}>
+        <AccountProvider initialAccounts={initialState.accounts}>
+          <CategoryProvider initialCategories={initialState.categories}>
+            <ThemeProvider
+              mode={initialState.themeSettings.mode}
+              paletteId={initialState.themeSettings.paletteId}
+            >
+              <AppNavigator />
+            </ThemeProvider>
+          </CategoryProvider>
+        </AccountProvider>
+      </TransactionProvider>
+    </CurrencyProvider>
   );
 }

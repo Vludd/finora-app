@@ -80,6 +80,7 @@ const en = {
   transactions: {
     title: "History",
     description: "Income, expenses, and transfers between accounts.",
+    currencyFilter: "Only transactions in {{currency}} are shown.",
     editorDescription: "Enter the amount and transaction details.",
     addTransaction: "Add transaction",
     editTransaction: "Edit transaction",
@@ -136,6 +137,13 @@ const en = {
     remaining: "Remaining",
     overLimit: "Over budget",
     categories: "Categories",
+    categorySettingsTitle: "Expense categories",
+    categorySettingsDescription:
+      "Configure the names, icons, and colors of the categories used in your budget.",
+    manageCategories: "Manage categories",
+    expenseCategories: "Expense categories",
+    categoryCount: "{{count}} total",
+    noExpenseCategories: "No expense categories yet",
     createBudget: "Create budget",
     editBudget: "Edit budget",
     noBudgets: "No budgets yet",
@@ -273,6 +281,9 @@ const en = {
 
   settings: {
     title: "Settings",
+    primaryCurrency: "Primary currency",
+    primaryCurrencyDescription:
+      "Used for the balance, summaries, and transaction filtering. Currencies are not converted.",
     language: "App language",
     languageDescription: "Choose the interface language.",
     appearance: "Appearance",

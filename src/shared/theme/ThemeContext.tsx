@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { vars, useColorScheme } from "nativewind";
+import { useColorScheme, vars } from "nativewind";
 import {
   createContext,
   useCallback,
@@ -19,6 +19,7 @@ import {
   type ThemeColors,
   type ThemePaletteId,
 } from "@/shared/theme/palettes";
+import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 
 export type ThemeMode = "system" | "light" | "dark";
 
@@ -115,47 +116,21 @@ export function ThemeProvider({
       setThemeMode: updateThemeMode,
       setPalette: updatePalette,
     }),
-    [mode, paletteId, resolvedColorScheme, colors, updateThemeMode, updatePalette],
+    [
+      mode,
+      paletteId,
+      resolvedColorScheme,
+      colors,
+      updateThemeMode,
+      updatePalette,
+    ],
   );
 
   return (
     <ThemeContext.Provider value={contextValue}>
       <View
         className="flex-1 bg-background"
-        style={vars({
-          "--color-background": colors.background,
-          "--color-surface": colors.surface,
-          "--color-surface-raised": colors.surfaceRaised,
-          "--color-surface-soft": colors.surfaceSoft,
-          "--color-border": colors.border,
-          "--color-accent": colors.accent,
-          "--color-accent-dark": colors.accentDark,
-          "--color-accent-muted": colors.accentMuted,
-          "--color-foreground": colors.foreground,
-          "--color-muted": colors.muted,
-          "--color-subtle": colors.subtle,
-          "--color-income": colors.income,
-          "--color-expense": colors.expense,
-          "--color-warning": colors.warning,
-          "--color-accent-contrast": colors.accentContrast,
-          "--color-accent-contrast-text": colors.accentContrastText,
-          "--color-hero": colors.heroBackground,
-          "--color-hero-decoration": colors.heroDecoration,
-          "--color-hero-border": colors.heroBorder,
-          "--color-hero-label": colors.heroLabel,
-          "--color-hero-secondary": colors.heroSecondary,
-          "--color-positive-surface": colors.positiveSurface,
-          "--color-hero-line": colors.heroLine,
-          "--color-chart-bar": colors.chartBar,
-          "--color-transaction-food": colors.transactionFood,
-          "--color-transaction-food-surface": colors.transactionFoodSurface,
-          "--color-transaction-transport": colors.transactionTransport,
-          "--color-transaction-transport-surface": colors.transactionTransportSurface,
-          "--color-transaction-cafe": colors.transactionCafe,
-          "--color-transaction-cafe-surface": colors.transactionCafeSurface,
-          "--color-income-surface": colors.incomeSurface,
-          "--color-expense-surface": colors.expenseSurface,
-        })}
+        style={vars(getThemeCssVariables(colors))}
       >
         {children}
       </View>

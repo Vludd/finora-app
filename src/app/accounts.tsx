@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { vars } from "nativewind";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,6 +31,7 @@ import {
 } from "@/shared/lib/currencies";
 import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
 import AppHeader from "@/shared/ui/AppHeader";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
@@ -752,6 +754,7 @@ export default function AccountsScreen({
           <KeyboardAvoidingView
             className="flex-1 justify-end bg-black/50"
             behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={vars(getThemeCssVariables(colors))}
           >
             {editorSheet}
           </KeyboardAvoidingView>
