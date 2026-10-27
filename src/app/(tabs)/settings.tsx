@@ -1,12 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { changeAppLanguage } from "@/i18n";
 import { type AppLanguage } from "@/i18n/resources";
-import { useCurrency } from "@/shared/context/CurrencyContext";
 import { useTheme, type ThemeMode } from "@/shared/theme/ThemeContext";
 import { THEME_PALETTES } from "@/shared/theme/palettes";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
@@ -36,7 +34,8 @@ const themeModes: {
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { currency, currencies, setCurrency } = useCurrency();
+  const currentLanguage: AppLanguage =
+    (i18n.resolvedLanguage ?? i18n.language) === "ru" ? "ru" : "en";
   const {
     colors,
     mode,
@@ -45,33 +44,6 @@ export default function SettingsScreen() {
     setThemeMode,
     setPalette,
   } = useTheme();
-  const [currencySearch, setCurrencySearch] = useState("");
-
-  const currentLanguage: AppLanguage =
-    (i18n.resolvedLanguage ?? i18n.language) === "ru" ? "ru" : "en";
-  const normalizedQuery = currencySearch
-    .trim()
-    .toLocaleLowerCase(currentLanguage);
-  const filteredCurrencies = currencies.filter((item) => {
-    return (
-      item.code.toLocaleLowerCase().includes(normalizedQuery) ||
-      item.symbol.toLocaleLowerCase().includes(normalizedQuery) ||
-      item.name[currentLanguage].toLocaleLowerCase().includes(normalizedQuery)
-    );
-  });
-
-  const [showAllCurrencies, setShowAllCurrencies] = useState(false);
-
-  const popularCurrencyCodes = ["USD", "EUR", "RUB", "KZT", "CNY"];
-
-  const isSearchingCurrency = currencySearch.trim().length > 0;
-
-  const visibleCurrencies =
-    showAllCurrencies || isSearchingCurrency
-      ? filteredCurrencies
-      : popularCurrencyCodes.flatMap((code) =>
-          filteredCurrencies.filter((item) => item.code === code),
-        );
 
   return (
     <SafeAreaView className="flex-1 bg-background pt-4" edges={["top"]}>
@@ -296,96 +268,6 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
-          </View>
-        </View>
-
-        <View className="gap-3 rounded-[20px] border border-border bg-surface p-4">
-          <Text className="text-lg font-semibold text-foreground">
-            {t("settings.currency")}
-          </Text>
-          <Text className="text-sm text-muted">
-            {t("settings.currencyDescription")}
-          </Text>
-
-          <TextInput
-            value={currencySearch}
-            onChangeText={setCurrencySearch}
-            placeholder={t("settings.currencySearch")}
-            placeholderTextColor={colors.subtle}
-            className="mt-2 min-h-12 rounded-[13px] border border-border bg-background px-3 text-sm text-foreground"
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityLabel={t("common.search")}
-          />
-
-          <View className="mt-2 gap-1">
-            {visibleCurrencies.map((item) => {
-              const selected = currency.code === item.code;
-
-              return (
-                <Pressable
-                  key={item.code}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${item.name[currentLanguage]}, ${item.code}, ${item.symbol}`}
-                  accessibilityState={{ selected }}
-                  onPress={() => {
-                    void setCurrency(item.code);
-                  }}
-                  className={`min-h-16 flex-row items-center gap-3 rounded-[14px] border px-2 py-2 ${
-                    selected ? "border-accent bg-accent-dark" : "border-border"
-                  }`}
-                >
-                  <View className="h-[42px] w-[42px] items-center justify-center rounded-[13px] bg-surface-raised">
-                    <Text className="text-base font-bold text-foreground">
-                      {item.symbol}
-                    </Text>
-                  </View>
-
-                  <View className="min-w-0 flex-1 gap-1">
-                    <Text className="text-[13px] font-semibold text-foreground">
-                      {item.name[currentLanguage]}
-                    </Text>
-                    <Text className="text-[11px] font-semibold tracking-[0.7px] text-subtle">
-                      {item.code}
-                    </Text>
-                  </View>
-
-                  {selected && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={21}
-                      color={colors.accent}
-                    />
-                  )}
-                </Pressable>
-              );
-            })}
-
-            {filteredCurrencies.length === 0 && (
-              <Text className="text-sm text-muted">
-                {t("settings.noCurrenciesFound")}
-              </Text>
-            )}
-
-            {!isSearchingCurrency && filteredCurrencies.length > 5 && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setShowAllCurrencies((prev) => !prev)}
-                className="mt-2 min-h-12 flex-row items-center justify-center gap-2 rounded-[14px] border border-border px-3"
-              >
-                <Text className="text-sm font-semibold text-accent">
-                  {showAllCurrencies
-                    ? "Скрыть дополнительные валюты"
-                    : "Показать все валюты"}
-                </Text>
-
-                <Ionicons
-                  name={showAllCurrencies ? "chevron-up" : "chevron-down"}
-                  size={18}
-                  color={colors.accent}
-                />
-              </Pressable>
-            )}
           </View>
         </View>
       </ScrollView>

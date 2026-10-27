@@ -4,6 +4,8 @@ export type Transaction = {
   id: string;
   type: TransactionType;
   amount: number;
+  /** Amount credited to the destination account when transferring between currencies. */
+  toAmount: number | null;
   accountId: string;
   categoryId: string | null;
   toAccountId: string | null;
@@ -20,7 +22,7 @@ export function calculateAccountBalance(
   return transactions.reduce((balance, transaction) => {
     if (transaction.type === "transfer") {
       if (transaction.accountId === accountId) return balance - transaction.amount;
-      if (transaction.toAccountId === accountId) return balance + transaction.amount;
+      if (transaction.toAccountId === accountId) return balance + (transaction.toAmount ?? transaction.amount);
       return balance;
     }
 

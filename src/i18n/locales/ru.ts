@@ -34,6 +34,7 @@ const ru = {
   home: {
     title: "Главная",
     totalBalance: "Общий баланс",
+    balanceByCurrency: "Баланс по валютам",
     accountsCount: "Количество счетов: {{count}}",
     income: "Доходы",
     expenses: "Расходы",
@@ -101,6 +102,9 @@ const ru = {
     work: "Работа",
     fromAccount: "Со счёта",
     toAccount: "На счёт",
+    receivedAmount: "Сумма зачисления",
+    transferCurrencyHint:
+      "Валюты счетов отличаются. Укажите сумму, которая поступит на счёт получателя.",
     deleteTitle: "Удалить операцию?",
     noResults: "Ничего не найдено",
     noResultsDescription: "Измените поиск или выберите другой фильтр.",
@@ -114,6 +118,8 @@ const ru = {
     validation: {
       accountRequired: "Выберите счёт.",
       destinationRequired: "Выберите счёт-получатель.",
+      destinationAmountRequired:
+        "Введите сумму зачисления в валюте счёта получателя.",
       differentAccounts: "Счёт отправления и получения должны отличаться.",
       dateRequired: "Введите существующую дату в формате ГГГГ-ММ-ДД.",
     },
@@ -177,8 +183,16 @@ const ru = {
     },
     manage: {
       newAccount: "Новый счёт",
-      editorDescription: "Выберите тип, название, значок и акцентный цвет.",
+      editorDescription:
+        "Выберите тип, название, валюту, значок и акцентный цвет.",
       accountType: "Тип счёта",
+      currency: "Валюта счёта",
+      currencySearch: "Поиск по названию или коду валюты",
+      showAllCurrencies: "Показать все валюты",
+      hideAdditionalCurrencies: "Скрыть дополнительные валюты",
+      currencyLocked:
+        "Валюта недоступна для изменения. Счёт уже имеет операции.",
+      noCurrenciesFound: "Подходящие валюты не найдены.",
       nameRequired: "Введите название счёта.",
       chooseIcon: "Выберите значок",
       accentColor: "Акцентный цвет",
@@ -224,7 +238,8 @@ const ru = {
       addCategory: "Добавить категорию",
       newCategory: "Новая категория",
       editCategory: "Изменить категорию",
-      editorDescription: "Выберите тип, название, значок и акцентный цвет.",
+      editorDescription:
+        "Выберите тип, название, валюту, значок и акцентный цвет.",
       categoryType: "Тип категории",
       categoryName: "Название",
       namePlaceholder: "Например, Домашние животные",
@@ -273,11 +288,6 @@ const ru = {
       rose: "Розовая",
       monochrome: "Монохромная",
     },
-    currency: "Валюта",
-    currencyDescription:
-      "Валюта отображения сумм. Конвертация остатков и операций пока не выполняется.",
-    currencySearch: "Поиск по названию или коду валюты",
-    noCurrenciesFound: "Подходящие валюты не найдены.",
     about: "О приложении",
     version: "Версия",
   },

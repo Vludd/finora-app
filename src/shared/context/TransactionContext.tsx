@@ -28,6 +28,7 @@ function isStoredTransaction(value: unknown): value is Transaction {
     isTransactionType(item.type) &&
     typeof item.amount === "number" &&
     Number.isFinite(item.amount) &&
+    (item.toAmount === null || item.toAmount === undefined || (typeof item.toAmount === "number" && Number.isFinite(item.toAmount) && item.toAmount > 0)) &&
     item.amount > 0 &&
     typeof item.accountId === "string" &&
     typeof item.date === "string" &&
@@ -47,7 +48,13 @@ export async function loadSavedTransactions(): Promise<Transaction[]> {
     if (!saved) return [];
     const parsed: unknown = JSON.parse(saved);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isStoredTransaction);
+    return parsed.filter(isStoredTransaction).map((transaction) => ({
+      ...transaction,
+      // Older transfers had one amount; retain that value for the destination.
+      toAmount: transaction.type === "transfer"
+        ? (transaction.toAmount ?? transaction.amount)
+        : null,
+    }));
   } catch (error) {
     console.warn("Failed to load transactions", error);
     return [];

@@ -6,8 +6,12 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useAccounts } from "@/shared/context/AccountContext";
 import { useCategories } from "@/shared/context/CategoryContext";
-import { useCurrency } from "@/shared/context/CurrencyContext";
 import { useTransactions } from "@/shared/context/TransactionContext";
+import {
+  DEFAULT_CURRENCY_CODE,
+  getCurrencyByCode,
+  type CurrencyCode,
+} from "@/shared/lib/currencies";
 import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
 import type { TransactionType } from "@/shared/transactions/transactionTypes";
@@ -63,39 +67,94 @@ function getTransactionDateLabel(
 
 export default function HomeScreen() {
   const { t, i18n } = useTranslation();
-  const { currency } = useCurrency();
   const { colors } = useTheme();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
   const { transactions } = useTransactions();
   const router = useRouter();
   const [balanceVisible, setBalanceVisible] = useState(true);
+  const [weeklyCurrencyCode, setWeeklyCurrencyCode] =
+    useState<CurrencyCode | null>(null);
   const locale =
     (i18n.resolvedLanguage ?? i18n.language) === "ru" ? "ru-KZ" : "en-KZ";
 
-  const totalBalance = useMemo(
-    () =>
-      accounts.reduce(
-        (total, account) =>
-          total + calculateAccountBalance(account.id, transactions),
-        0,
-      ),
-    [accounts, transactions],
-  );
+  const balanceByCurrency = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const account of accounts) {
+      const code = account.currencyCode ?? DEFAULT_CURRENCY_CODE;
+      totals[code] =
+        (totals[code] ?? 0) + calculateAccountBalance(account.id, transactions);
+    }
+    return Object.entries(totals).sort(([a], [b]) => a.localeCompare(b));
+  }, [accounts, transactions]);
 
-  const monthTotals = useMemo(() => {
+  const monthTotals = useMemo<
+    Record<string, { income: number; expense: number }>
+  >(() => {
     const currentMonth = localDateString().slice(0, 7);
-    return transactions.reduce(
-      (totals, transaction) => {
-        if (!transaction.date.startsWith(currentMonth)) return totals;
-        if (transaction.type === "income") totals.income += transaction.amount;
-        if (transaction.type === "expense")
-          totals.expense += transaction.amount;
-        return totals;
-      },
-      { income: 0, expense: 0 },
+    const totals: Record<string, { income: number; expense: number }> = {};
+    for (const transaction of transactions) {
+      if (
+        !transaction.date.startsWith(currentMonth) ||
+        transaction.type === "transfer"
+      )
+        continue;
+      const account = accounts.find(
+        (item) => item.id === transaction.accountId,
+      );
+      if (!account) continue;
+      const code = account.currencyCode ?? DEFAULT_CURRENCY_CODE;
+      totals[code] ??= { income: 0, expense: 0 };
+      if (transaction.type === "income")
+        totals[code].income += transaction.amount;
+      if (transaction.type === "expense")
+        totals[code].expense += transaction.amount;
+    }
+    return totals;
+  }, [transactions, accounts]);
+
+  const monthTotalEntries = Object.entries(monthTotals) as [
+    string,
+    { income: number; expense: number },
+  ][];
+  const summaryCurrencyCodes = Array.from(
+    new Set(
+      accounts.map((account) => account.currencyCode ?? DEFAULT_CURRENCY_CODE),
+    ),
+  );
+  if (summaryCurrencyCodes.length === 0) {
+    summaryCurrencyCodes.push(DEFAULT_CURRENCY_CODE);
+  }
+
+  const monthIncomeAmounts = monthTotalEntries
+    .filter(([, totals]) => totals.income > 0)
+    .map(
+      ([code, totals]) =>
+        `${formatCurrency(totals.income, getCurrencyByCode(code), !balanceVisible)}${Object.keys(monthTotals).length > 1 ? ` · ${code}` : ""}`,
     );
-  }, [transactions]);
+  const monthExpenseAmounts = monthTotalEntries
+    .filter(([, totals]) => totals.expense > 0)
+    .map(
+      ([code, totals]) =>
+        `${formatCurrency(totals.expense, getCurrencyByCode(code), !balanceVisible)}${Object.keys(monthTotals).length > 1 ? ` · ${code}` : ""}`,
+    );
+
+  const zeroSummaryAmounts = summaryCurrencyCodes.map(
+    (code) =>
+      `${formatCurrency(0, getCurrencyByCode(code), !balanceVisible)}${summaryCurrencyCodes.length > 1 ? ` · ${code}` : ""}`,
+  );
+  const displayedMonthIncomeAmounts =
+    monthIncomeAmounts.length > 0 ? monthIncomeAmounts : zeroSummaryAmounts;
+  const displayedMonthExpenseAmounts =
+    monthExpenseAmounts.length > 0 ? monthExpenseAmounts : zeroSummaryAmounts;
+
+  const availableCurrencyCodes = Array.from(
+    new Set(accounts.map((account) => account.currencyCode)),
+  );
+  const activeWeeklyCurrencyCode =
+    weeklyCurrencyCode && availableCurrencyCodes.includes(weeklyCurrencyCode)
+      ? weeklyCurrencyCode
+      : (availableCurrencyCodes[0] ?? DEFAULT_CURRENCY_CODE);
 
   const weeklySpending = useMemo<WeeklySpendingItem[]>(() => {
     const today = new Date();
@@ -103,20 +162,23 @@ export default function HomeScreen() {
       const date = new Date(today);
       date.setDate(today.getDate() - (6 - index));
       const dateKey = localDateString(date);
-      const value = transactions.reduce(
-        (total, transaction) =>
-          transaction.type === "expense" && transaction.date === dateKey
-            ? total + transaction.amount
-            : total,
-        0,
-      );
+      const value = transactions.reduce((total, transaction) => {
+        if (transaction.type !== "expense" || transaction.date !== dateKey)
+          return total;
+        const account = accounts.find(
+          (item) => item.id === transaction.accountId,
+        );
+        return account?.currencyCode === activeWeeklyCurrencyCode
+          ? total + transaction.amount
+          : total;
+      }, 0);
       return {
         day: weekdayKeys[date.getDay()],
         value,
         highlighted: index === 6,
       };
     });
-  }, [transactions]);
+  }, [transactions, accounts, activeWeeklyCurrencyCode]);
 
   const weeklyTotal = weeklySpending.reduce(
     (total, item) => total + item.value,
@@ -175,7 +237,9 @@ export default function HomeScreen() {
 
             <View className="flex-row items-center justify-between">
               <Text className="text-[11px] font-bold tracking-[1.5px] text-hero-label">
-                {t("home.totalBalance")}
+                {balanceByCurrency.length > 1
+                  ? t("home.balanceByCurrency")
+                  : t("home.totalBalance")}
               </Text>
 
               <Pressable
@@ -196,13 +260,33 @@ export default function HomeScreen() {
               </Pressable>
             </View>
 
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              className="mt-4 text-[33px] font-extrabold tracking-[-1.3px] text-foreground"
-            >
-              {formatCurrency(totalBalance, currency, !balanceVisible)}
-            </Text>
+            <View className="mt-3 gap-1">
+              {balanceByCurrency.length > 0 ? (
+                balanceByCurrency.map(([code, amount], index) => (
+                  <Text
+                    key={code}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    className={`${index === 0 ? "text-[30px] tracking-[-1px]" : "text-[20px] tracking-[-0.4px]"} font-extrabold text-foreground`}
+                  >
+                    {formatCurrency(
+                      amount,
+                      getCurrencyByCode(code),
+                      !balanceVisible,
+                    )}
+                    {balanceByCurrency.length > 1 ? ` · ${code}` : ""}
+                  </Text>
+                ))
+              ) : (
+                <Text className="text-[30px] font-extrabold tracking-[-1px] text-foreground">
+                  {formatCurrency(
+                    0,
+                    getCurrencyByCode(DEFAULT_CURRENCY_CODE),
+                    !balanceVisible,
+                  )}
+                </Text>
+              )}
+            </View>
 
             <View
               className="my-2"
@@ -216,11 +300,7 @@ export default function HomeScreen() {
             <View className="flex-row gap-3 justify-between pt-4">
               <SummarySection
                 title={t("home.income")}
-                amount={formatCurrency(
-                  monthTotals.income,
-                  currency,
-                  !balanceVisible,
-                )}
+                amounts={displayedMonthIncomeAmounts}
                 period={t("home.thisMonth")}
                 icon="arrow-down-outline"
                 color={colors.accent}
@@ -238,11 +318,7 @@ export default function HomeScreen() {
 
               <SummarySection
                 title={t("home.expenses")}
-                amount={formatCurrency(
-                  monthTotals.expense,
-                  currency,
-                  !balanceVisible,
-                )}
+                amounts={displayedMonthExpenseAmounts}
                 period={t("home.thisMonth")}
                 icon="arrow-up-outline"
                 color={colors.expense}
@@ -311,6 +387,32 @@ export default function HomeScreen() {
           </View>
 
           <View className="mt-4">
+            {availableCurrencyCodes.length > 1 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8, paddingBottom: 10 }}
+              >
+                {availableCurrencyCodes.map((code) => {
+                  const selected = code === activeWeeklyCurrencyCode;
+                  return (
+                    <Pressable
+                      key={code}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      onPress={() => setWeeklyCurrencyCode(code)}
+                      className={`rounded-full border px-3 py-2 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
+                    >
+                      <Text
+                        className={`text-xs font-bold ${selected ? "text-accent" : "text-muted"}`}
+                      >
+                        {code}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            ) : null}
             <View className="mb-3 flex-row items-center justify-between">
               <View>
                 <Text className="text-[17px] font-extrabold tracking-[-0.35px] text-foreground">
@@ -326,7 +428,11 @@ export default function HomeScreen() {
                   {t("home.chartTotal")}
                 </Text>
                 <Text className="mt-1 text-[15px] font-extrabold text-foreground">
-                  {formatCurrency(weeklyTotal, currency, !balanceVisible)}
+                  {formatCurrency(
+                    weeklyTotal,
+                    getCurrencyByCode(activeWeeklyCurrencyCode),
+                    !balanceVisible,
+                  )}
                 </Text>
               </View>
             </View>
@@ -372,14 +478,14 @@ export default function HomeScreen() {
 
 function SummarySection({
   title,
-  amount,
+  amounts,
   period,
   icon,
   color,
   iconBackground,
 }: {
   title: string;
-  amount: string;
+  amounts: string[];
   period: string;
   icon: IconName;
   color: string;
@@ -398,14 +504,23 @@ function SummarySection({
         <Text className="text-xs font-semibold text-muted">{title}</Text>
       </View>
 
-      <Text
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        className="mt-2 text-2xl font-extrabold tracking-[-0.4px]"
-        style={{ color }}
-      >
-        {amount}
-      </Text>
+      <View className="mt-2 gap-1">
+        {amounts.length > 0 ? (
+          amounts.map((amount, index) => (
+            <Text
+              key={`${amount}-${index}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              className={`${index === 0 ? "text-xl" : "text-sm"} font-extrabold tracking-[-0.3px]`}
+              style={{ color }}
+            >
+              {amount}
+            </Text>
+          ))
+        ) : (
+          <Text className="text-xl font-extrabold text-muted">—</Text>
+        )}
+      </View>
     </View>
   );
 }

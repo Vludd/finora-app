@@ -197,6 +197,219 @@ export default function CategoriesScreen() {
     );
   }
 
+  const editorSheet = (
+    <View
+      className="rounded-t-[28px] bg-background px-4 pt-4"
+      style={{
+        maxHeight: "92%",
+        paddingBottom: Math.max(insets.bottom + 8, 20),
+      }}
+    >
+      <View className="mb-3 flex-row items-center justify-between">
+        <View className="flex-1 pr-3">
+          <Text className="text-[21px] font-extrabold text-foreground">
+            {editingId
+              ? t("categories.manage.editCategory")
+              : t("categories.manage.newCategory")}
+          </Text>
+          <Text className="mt-1 text-xs text-muted">
+            {t("categories.manage.editorDescription")}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("common.close")}
+          onPress={() => setEditorVisible(false)}
+          className="h-10 w-10 items-center justify-center rounded-[13px] border border-border bg-surface"
+        >
+          <Ionicons name="close" size={21} color={colors.foreground} />
+        </Pressable>
+      </View>
+
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerClassName="gap-5 pb-3"
+      >
+        <View className="gap-2">
+          <Text className="text-sm font-semibold text-foreground">
+            {t("categories.manage.categoryType")}
+          </Text>
+          <View className="flex-row gap-2">
+            <DraftTypeButton
+              label={t("categories.manage.expense")}
+              icon="arrow-up-outline"
+              selected={draftType === "expense"}
+              color={colors.expense}
+              onPress={() => setDraftType("expense")}
+            />
+            <DraftTypeButton
+              label={t("categories.manage.income")}
+              icon="arrow-down-outline"
+              selected={draftType === "income"}
+              color={colors.income}
+              onPress={() => setDraftType("income")}
+            />
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-sm font-semibold text-foreground">
+            {t("categories.manage.categoryName")}
+          </Text>
+          <TextInput
+            value={draftName}
+            onChangeText={(value) => {
+              setDraftName(value);
+              if (value.trim()) setNameError(false);
+            }}
+            placeholder={t("categories.manage.namePlaceholder")}
+            placeholderTextColor={colors.subtle}
+            maxLength={40}
+            returnKeyType="done"
+            className={`min-h-[50px] rounded-[14px] border bg-surface px-3 text-[15px] text-foreground ${nameError ? "border-expense" : "border-border"}`}
+            accessibilityLabel={t("categories.manage.categoryName")}
+          />
+          {nameError && (
+            <Text className="text-xs text-expense">
+              {t("categories.manage.nameRequired")}
+            </Text>
+          )}
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-sm font-semibold text-foreground">
+            {t("categories.manage.chooseIcon")}
+          </Text>
+          <View className="flex-row flex-wrap justify-between gap-y-2">
+            {categoryIcons.map((iconName) => {
+              const selected = draftIcon === iconName;
+              return (
+                <Pressable
+                  key={iconName}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={iconName
+                    .replace(/-outline$/, "")
+                    .replace(/-/g, " ")}
+                  onPress={() => setDraftIcon(iconName)}
+                  className="aspect-square w-[15.5%] items-center justify-center rounded-[12px] border"
+                  style={{
+                    backgroundColor: selected
+                      ? `${draftColor}20`
+                      : colors.surface,
+                    borderColor: selected ? draftColor : colors.border,
+                  }}
+                >
+                  <Ionicons
+                    name={iconName}
+                    size={22}
+                    color={selected ? draftColor : colors.muted}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-sm font-semibold text-foreground">
+            {t("categories.manage.accentColor")}
+          </Text>
+          <View className="flex-row flex-wrap justify-between gap-y-3">
+            {categoryColors.map((color) => {
+              const selected = draftColor === color;
+              return (
+                <Pressable
+                  key={color}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${t("categories.manage.colorOption")} ${color}`}
+                  onPress={() => setDraftColor(color)}
+                  className="h-9 w-[9.5%] items-center justify-center rounded-full border-2"
+                  style={{
+                    backgroundColor: color,
+                    borderColor: selected ? colors.foreground : "transparent",
+                  }}
+                >
+                  {selected && (
+                    <Ionicons name="checkmark" size={17} color="#FFFFFF" />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <View className="flex-row items-center gap-3 rounded-[16px] border border-border bg-surface p-3">
+          <View
+            className="h-12 w-12 items-center justify-center rounded-[16px]"
+            style={{ backgroundColor: `${draftColor}20` }}
+          >
+            <Ionicons name={draftIcon} size={25} color={draftColor} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="text-[10px] font-bold uppercase tracking-[1px] text-subtle">
+              {t("categories.manage.preview")}
+            </Text>
+            <Text
+              numberOfLines={1}
+              className="mt-1 text-[15px] font-bold text-foreground"
+            >
+              {draftName.trim() || t("categories.manage.namePlaceholder")}
+            </Text>
+          </View>
+          <View
+            className="rounded-full px-2.5 py-1"
+            style={{
+              backgroundColor: `${draftType === "income" ? colors.income : colors.expense}20`,
+            }}
+          >
+            <Text
+              className="text-xs font-semibold"
+              style={{
+                color: draftType === "income" ? colors.income : colors.expense,
+              }}
+            >
+              {draftType === "income"
+                ? t("categories.manage.income")
+                : t("categories.manage.expense")}
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View className="flex-row gap-3 border-t border-border pt-3">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setEditorVisible(false)}
+          className="min-h-[50px] flex-1 items-center justify-center rounded-[14px] border border-border bg-surface"
+        >
+          <Text className="text-sm font-bold text-foreground">
+            {t("common.cancel")}
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={saveCategory}
+          className="min-h-[50px] flex-1 flex-row items-center justify-center gap-2 rounded-[14px] bg-accent"
+        >
+          <Ionicons
+            name="checkmark"
+            size={19}
+            color={colors.accentContrastText}
+          />
+          <Text
+            className="text-sm font-bold"
+            style={{ color: colors.accentContrastText }}
+          >
+            {t("common.save")}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView
       className="flex-1 bg-background pt-3"
@@ -348,236 +561,59 @@ export default function CategoriesScreen() {
         )}
       </ScrollView>
 
-      <Modal
-        visible={editorVisible}
-        transparent
-        animationType="slide"
-        statusBarTranslucent
-        onRequestClose={() => setEditorVisible(false)}
-      >
-        <KeyboardAvoidingView
-          className="flex-1 justify-end bg-black/50"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
+      {Platform.OS === "web" ? (
+        editorVisible && (
           <View
-            className="rounded-t-[28px] bg-background px-4 pt-4"
             style={{
-              maxHeight: "92%",
-              paddingBottom: Math.max(insets.bottom + 8, 20),
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              zIndex: 1000,
+              justifyContent: "flex-end",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
             }}
           >
-            <View className="mb-3 flex-row items-center justify-between">
-              <View className="flex-1 pr-3">
-                <Text className="text-[21px] font-extrabold text-foreground">
-                  {editingId
-                    ? t("categories.manage.editCategory")
-                    : t("categories.manage.newCategory")}
-                </Text>
-                <Text className="mt-1 text-xs text-muted">
-                  {t("categories.manage.editorDescription")}
-                </Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("common.close")}
-                onPress={() => setEditorVisible(false)}
-                className="h-10 w-10 items-center justify-center rounded-[13px] border border-border bg-surface"
-              >
-                <Ionicons name="close" size={21} color={colors.foreground} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              contentContainerClassName="gap-5 pb-3"
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("common.close")}
+              onPress={() => setEditorVisible(false)}
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+              }}
+            />
+            <KeyboardAvoidingView
+              style={{
+                maxHeight: "100%",
+                justifyContent: "flex-end",
+                zIndex: 1,
+              }}
             >
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {t("categories.manage.categoryType")}
-                </Text>
-                <View className="flex-row gap-2">
-                  <DraftTypeButton
-                    label={t("categories.manage.expense")}
-                    icon="arrow-up-outline"
-                    selected={draftType === "expense"}
-                    color={colors.expense}
-                    onPress={() => setDraftType("expense")}
-                  />
-                  <DraftTypeButton
-                    label={t("categories.manage.income")}
-                    icon="arrow-down-outline"
-                    selected={draftType === "income"}
-                    color={colors.income}
-                    onPress={() => setDraftType("income")}
-                  />
-                </View>
-              </View>
-
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {t("categories.manage.categoryName")}
-                </Text>
-                <TextInput
-                  value={draftName}
-                  onChangeText={(value) => {
-                    setDraftName(value);
-                    if (value.trim()) setNameError(false);
-                  }}
-                  placeholder={t("categories.manage.namePlaceholder")}
-                  placeholderTextColor={colors.subtle}
-                  maxLength={40}
-                  returnKeyType="done"
-                  className={`min-h-[50px] rounded-[14px] border bg-surface px-3 text-[15px] text-foreground ${nameError ? "border-expense" : "border-border"}`}
-                  accessibilityLabel={t("categories.manage.categoryName")}
-                />
-                {nameError && (
-                  <Text className="text-xs text-expense">
-                    {t("categories.manage.nameRequired")}
-                  </Text>
-                )}
-              </View>
-
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {t("categories.manage.chooseIcon")}
-                </Text>
-                <View className="flex-row flex-wrap justify-between gap-y-2">
-                  {categoryIcons.map((iconName) => {
-                    const selected = draftIcon === iconName;
-                    return (
-                      <Pressable
-                        key={iconName}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        accessibilityLabel={iconName
-                          .replace(/-outline$/, "")
-                          .replace(/-/g, " ")}
-                        onPress={() => setDraftIcon(iconName)}
-                        className="aspect-square w-[15.5%] items-center justify-center rounded-[12px] border"
-                        style={{
-                          backgroundColor: selected
-                            ? `${draftColor}20`
-                            : colors.surface,
-                          borderColor: selected ? draftColor : colors.border,
-                        }}
-                      >
-                        <Ionicons
-                          name={iconName}
-                          size={22}
-                          color={selected ? draftColor : colors.muted}
-                        />
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {t("categories.manage.accentColor")}
-                </Text>
-                <View className="flex-row flex-wrap justify-between gap-y-3">
-                  {categoryColors.map((color) => {
-                    const selected = draftColor === color;
-                    return (
-                      <Pressable
-                        key={color}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        accessibilityLabel={`${t("categories.manage.colorOption")} ${color}`}
-                        onPress={() => setDraftColor(color)}
-                        className="h-9 w-[9.5%] items-center justify-center rounded-full border-2"
-                        style={{
-                          backgroundColor: color,
-                          borderColor: selected
-                            ? colors.foreground
-                            : "transparent",
-                        }}
-                      >
-                        {selected && (
-                          <Ionicons
-                            name="checkmark"
-                            size={17}
-                            color="#FFFFFF"
-                          />
-                        )}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-
-              <View className="flex-row items-center gap-3 rounded-[16px] border border-border bg-surface p-3">
-                <View
-                  className="h-12 w-12 items-center justify-center rounded-[16px]"
-                  style={{ backgroundColor: `${draftColor}20` }}
-                >
-                  <Ionicons name={draftIcon} size={25} color={draftColor} />
-                </View>
-                <View className="min-w-0 flex-1">
-                  <Text className="text-[10px] font-bold uppercase tracking-[1px] text-subtle">
-                    {t("categories.manage.preview")}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    className="mt-1 text-[15px] font-bold text-foreground"
-                  >
-                    {draftName.trim() || t("categories.manage.namePlaceholder")}
-                  </Text>
-                </View>
-                <View
-                  className="rounded-full px-2.5 py-1"
-                  style={{
-                    backgroundColor: `${draftType === "income" ? colors.income : colors.expense}20`,
-                  }}
-                >
-                  <Text
-                    className="text-xs font-semibold"
-                    style={{
-                      color:
-                        draftType === "income" ? colors.income : colors.expense,
-                    }}
-                  >
-                    {draftType === "income"
-                      ? t("categories.manage.income")
-                      : t("categories.manage.expense")}
-                  </Text>
-                </View>
-              </View>
-            </ScrollView>
-
-            <View className="flex-row gap-3 border-t border-border pt-3">
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setEditorVisible(false)}
-                className="min-h-[50px] flex-1 items-center justify-center rounded-[14px] border border-border bg-surface"
-              >
-                <Text className="text-sm font-bold text-foreground">
-                  {t("common.cancel")}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={saveCategory}
-                className="min-h-[50px] flex-1 flex-row items-center justify-center gap-2 rounded-[14px] bg-accent"
-              >
-                <Ionicons
-                  name="checkmark"
-                  size={19}
-                  color={colors.accentContrastText}
-                />
-                <Text
-                  className="text-sm font-bold"
-                  style={{ color: colors.accentContrastText }}
-                >
-                  {t("common.save")}
-                </Text>
-              </Pressable>
-            </View>
+              {editorSheet}
+            </KeyboardAvoidingView>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        )
+      ) : (
+        <Modal
+          visible={editorVisible}
+          transparent
+          animationType="slide"
+          statusBarTranslucent
+          onRequestClose={() => setEditorVisible(false)}
+        >
+          <KeyboardAvoidingView
+            className="flex-1 justify-end bg-black/50"
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            {editorSheet}
+          </KeyboardAvoidingView>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }

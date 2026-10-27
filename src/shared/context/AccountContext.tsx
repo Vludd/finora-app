@@ -8,6 +8,7 @@ import {
   type PropsWithChildren,
 } from "react";
 
+import { DEFAULT_CURRENCY_CODE, isCurrencyCode, type CurrencyCode } from "@/shared/lib/currencies";
 import type {
   Account,
   AccountDraft,
@@ -33,7 +34,7 @@ function isStoredAccount(value: unknown): value is Account {
   );
 }
 
-export async function loadSavedAccounts(): Promise<Account[]> {
+export async function loadSavedAccounts(legacyCurrencyCode: CurrencyCode = DEFAULT_CURRENCY_CODE): Promise<Account[]> {
   try {
     const saved = await AsyncStorage.getItem(ACCOUNT_STORAGE_KEY);
     if (!saved) return [];
@@ -41,7 +42,25 @@ export async function loadSavedAccounts(): Promise<Account[]> {
     const parsed: unknown = JSON.parse(saved);
     if (!Array.isArray(parsed)) return [];
 
-    return parsed.filter(isStoredAccount);
+    const storedAccounts = parsed.filter(isStoredAccount);
+    const accounts = storedAccounts.map((account) => ({
+      ...account,
+      // Keep the former global currency for old accounts so existing amounts
+      // retain their original meaning during migration.
+      currencyCode: isCurrencyCode((account as Partial<Account>).currencyCode)
+        ? (account as Account).currencyCode
+        : legacyCurrencyCode,
+    }));
+
+    if (storedAccounts.some((account) => !isCurrencyCode((account as Partial<Account>).currencyCode))) {
+      try {
+        await AsyncStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
+      } catch (error) {
+        console.warn("Failed to migrate account currencies", error);
+      }
+    }
+
+    return accounts;
   } catch (error) {
     console.warn("Failed to load accounts", error);
     return [];

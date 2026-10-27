@@ -34,6 +34,7 @@ const en = {
   home: {
     title: "Home",
     totalBalance: "Total balance",
+    balanceByCurrency: "Balances by currency",
     accountsCount: "Accounts: {{count}}",
     income: "Income",
     expenses: "Expenses",
@@ -102,6 +103,9 @@ const en = {
     work: "Work",
     fromAccount: "From account",
     toAccount: "To account",
+    receivedAmount: "Amount received",
+    transferCurrencyHint:
+      "The account currencies differ. Enter the amount that will be credited to the destination account.",
     deleteTitle: "Delete transaction?",
     noResults: "No results found",
     noResultsDescription: "Change the search or choose another filter.",
@@ -115,6 +119,8 @@ const en = {
     validation: {
       accountRequired: "Choose an account.",
       destinationRequired: "Choose a destination account.",
+      destinationAmountRequired:
+        "Enter the amount credited in the destination account currency.",
       differentAccounts:
         "The source and destination accounts must be different.",
       dateRequired: "Enter a valid date in YYYY-MM-DD format.",
@@ -181,8 +187,16 @@ const en = {
     },
     manage: {
       newAccount: "New account",
-      editorDescription: "Choose a type, name, icon, and accent color.",
+      editorDescription:
+        "Choose a type, name, currency, icon, and accent color.",
       accountType: "Account type",
+      currency: "Account currency",
+      currencySearch: "Search by currency name or code",
+      showAllCurrencies: "Show all currencies",
+      hideAdditionalCurrencies: "Hide additional currencies",
+      currencyLocked:
+        "Currency cannot be changed. This account already has transactions.",
+      noCurrenciesFound: "No matching currencies found.",
       nameRequired: "Enter an account name.",
       chooseIcon: "Choose an icon",
       accentColor: "Accent color",
@@ -228,7 +242,8 @@ const en = {
       addCategory: "Add category",
       newCategory: "New category",
       editCategory: "Edit category",
-      editorDescription: "Choose a type, name, icon, and accent color.",
+      editorDescription:
+        "Choose a type, name, currency, icon, and accent color.",
       categoryType: "Category type",
       categoryName: "Name",
       namePlaceholder: "For example, Pets",
@@ -277,11 +292,6 @@ const en = {
       rose: "Rose",
       monochrome: "Monochrome",
     },
-    currency: "Currency",
-    currencyDescription:
-      "Choose the currency used to display amounts. Exchange conversion is not enabled yet.",
-    currencySearch: "Search by currency name or code",
-    noCurrenciesFound: "No matching currencies found.",
     about: "About",
     version: "Version",
   },
