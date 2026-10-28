@@ -1,22 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { vars } from "nativewind";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-import type { Category } from "@/shared/categories/categoryTypes";
 import { useAccounts } from "@/shared/context/AccountContext";
 import { useCategories } from "@/shared/context/CategoryContext";
 import { useCurrency } from "@/shared/context/CurrencyContext";
@@ -27,12 +8,23 @@ import {
 } from "@/shared/lib/currencies";
 import { formatCurrency } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
-import { getThemeCssVariables } from "@/shared/theme/themeVariables";
+import TransactionEditorModal from "@/shared/transactions/TransactionEditorModal";
 import type {
   Transaction,
-  TransactionDraft,
   TransactionType,
 } from "@/shared/transactions/transactionTypes";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 type FilterType = "all" | "income" | "expense" | "transfer";
 
@@ -83,44 +75,21 @@ export default function TransactionsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ create?: string; type?: string }>();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { accounts } = useAccounts();
   const { currencyCode } = useCurrency();
   const { categories } = useCategories();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction } =
-    useTransactions();
+  const { transactions, deleteTransaction } = useTransactions();
 
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [editorVisible, setEditorVisible] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftType, setDraftType] = useState<TransactionType>("expense");
-  const [draftAmount, setDraftAmount] = useState("");
-  const [draftToAmount, setDraftToAmount] = useState("");
-  const [draftAccountId, setDraftAccountId] = useState("");
-  const [draftToAccountId, setDraftToAccountId] = useState("");
-  const [draftCategoryId, setDraftCategoryId] = useState("");
-  const [draftDate, setDraftDate] = useState(localDateString());
-  const [draftNote, setDraftNote] = useState("");
-  const [formError, setFormError] = useState("");
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
+  const [editorInitialType, setEditorInitialType] =
+    useState<TransactionType>("expense");
 
   const locale =
     (i18n.resolvedLanguage ?? i18n.language) === "ru" ? "ru-KZ" : "en-KZ";
-  const draftCategories = categories.filter(
-    (category) => category.type === draftType,
-  );
-  const selectedAccount = accounts.find(
-    (account) => account.id === draftAccountId,
-  );
-  const selectedToAccount = accounts.find(
-    (account) => account.id === draftToAccountId,
-  );
-  const isCrossCurrencyTransfer = Boolean(
-    draftType === "transfer" &&
-    selectedAccount &&
-    selectedToAccount &&
-    selectedAccount.currencyCode !== selectedToAccount.currencyCode,
-  );
 
   const monthTotals = useMemo(() => {
     const month = localDateString().slice(0, 7);
@@ -223,28 +192,11 @@ export default function TransactionsScreen() {
         router.push("/accounts");
         return;
       }
-      setEditingId(null);
-      setDraftType(type);
-      setDraftAmount("");
-      setDraftToAmount("");
-      const preferredAccount = accounts.find(
-        (account) =>
-          (account.currencyCode ?? DEFAULT_CURRENCY_CODE) === currencyCode,
-      );
-      const sourceAccount = preferredAccount ?? accounts[0];
-      setDraftAccountId(sourceAccount?.id ?? "");
-      setDraftToAccountId(
-        accounts.find((account) => account.id !== sourceAccount?.id)?.id ?? "",
-      );
-      setDraftCategoryId(
-        categories.find((category) => category.type === type)?.id ?? "",
-      );
-      setDraftDate(localDateString());
-      setDraftNote("");
-      setFormError("");
+      setEditingTransaction(null);
+      setEditorInitialType(type);
       setEditorVisible(true);
     },
-    [accounts, categories, router, currencyCode],
+    [accounts.length, router],
   );
 
   useEffect(() => {
@@ -260,105 +212,9 @@ export default function TransactionsScreen() {
   }, [params.create, params.type, openCreateEditor, router]);
 
   function openEditEditor(transaction: Transaction) {
-    setEditingId(transaction.id);
-    setDraftType(transaction.type);
-    setDraftAmount(String(transaction.amount));
-    setDraftToAmount(String(transaction.toAmount ?? transaction.amount));
-    setDraftAccountId(transaction.accountId);
-    setDraftToAccountId(
-      transaction.toAccountId ??
-        accounts.find((item) => item.id !== transaction.accountId)?.id ??
-        "",
-    );
-    setDraftCategoryId(transaction.categoryId ?? "");
-    setDraftDate(transaction.date);
-    setDraftNote(transaction.note ?? "");
-    setFormError("");
+    setEditingTransaction(transaction);
+    setEditorInitialType(transaction.type);
     setEditorVisible(true);
-  }
-
-  function chooseType(type: TransactionType) {
-    setDraftType(type);
-    setDraftCategoryId(
-      categories.find((category) => category.type === type)?.id ?? "",
-    );
-    if (type === "transfer") {
-      const from = accounts.find((account) => account.id === draftAccountId);
-      const to = accounts.find((account) => account.id === draftToAccountId);
-      setDraftToAmount(
-        from && to && from.currencyCode === to.currencyCode ? draftAmount : "",
-      );
-    }
-    setFormError("");
-  }
-
-  function saveTransaction() {
-    const amount = Number(draftAmount.replace(",", ".").trim());
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setFormError(t("validation.amountMustBePositive"));
-      return;
-    }
-    if (
-      !draftAccountId ||
-      !accounts.some((account) => account.id === draftAccountId)
-    ) {
-      setFormError(t("transactions.validation.accountRequired"));
-      return;
-    }
-    let toAmount: number | null = null;
-    if (draftType === "transfer") {
-      if (
-        !draftToAccountId ||
-        !accounts.some((account) => account.id === draftToAccountId)
-      ) {
-        setFormError(t("transactions.validation.destinationRequired"));
-        return;
-      }
-      if (draftToAccountId === draftAccountId) {
-        setFormError(t("transactions.validation.differentAccounts"));
-        return;
-      }
-      const fromAccount = accounts.find(
-        (account) => account.id === draftAccountId,
-      );
-      const toAccount = accounts.find(
-        (account) => account.id === draftToAccountId,
-      );
-      if (
-        fromAccount &&
-        toAccount &&
-        fromAccount.currencyCode !== toAccount.currencyCode
-      ) {
-        toAmount = Number(draftToAmount.replace(",", ".").trim());
-        if (!Number.isFinite(toAmount) || toAmount <= 0) {
-          setFormError(t("transactions.validation.destinationAmountRequired"));
-          return;
-        }
-      } else {
-        toAmount = amount;
-      }
-    }
-    const parsedDate = parseDate(draftDate);
-    if (!parsedDate) {
-      setFormError(t("transactions.validation.dateRequired"));
-      return;
-    }
-
-    const draft: TransactionDraft = {
-      type: draftType,
-      amount,
-      toAmount,
-      accountId: draftAccountId,
-      toAccountId: draftType === "transfer" ? draftToAccountId : null,
-      categoryId:
-        draftType === "transfer" || !draftCategoryId ? null : draftCategoryId,
-      date: draftDate,
-      note: draftNote.trim(),
-    };
-
-    if (editingId) updateTransaction(editingId, draft);
-    else addTransaction(draft);
-    setEditorVisible(false);
   }
 
   function confirmDelete(transaction: Transaction) {
@@ -562,13 +418,15 @@ export default function TransactionsScreen() {
                 : `${amountPrefix}${formatCurrency(transaction.amount, sourceCurrency)}`;
 
               return (
-                <Pressable
+                <View
                   key={transaction.id}
-                  accessibilityRole="button"
-                  onPress={() => openEditEditor(transaction)}
-                  className="rounded-[19px] border border-border bg-surface p-3"
+                  className="flex-row items-center gap-3 rounded-[19px] border border-border bg-surface p-3"
                 >
-                  <View className="flex-row items-center gap-3">
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => openEditEditor(transaction)}
+                    className="min-w-0 flex-1 flex-row items-center gap-3"
+                  >
                     <View
                       className="h-[48px] w-[48px] items-center justify-center rounded-[16px]"
                       style={{ backgroundColor: `${iconColor}20` }}
@@ -579,6 +437,7 @@ export default function TransactionsScreen() {
                         color={iconColor}
                       />
                     </View>
+
                     <View className="min-w-0 flex-1 gap-1">
                       <Text
                         numberOfLines={1}
@@ -586,9 +445,11 @@ export default function TransactionsScreen() {
                       >
                         {title}
                       </Text>
+
                       <Text numberOfLines={1} className="text-xs text-muted">
                         {subtitle}
                       </Text>
+
                       <Text className="text-[11px] text-subtle">
                         {getDateLabel(
                           transaction.date,
@@ -598,33 +459,32 @@ export default function TransactionsScreen() {
                         )}
                       </Text>
                     </View>
-                    <View className="items-end gap-2">
-                      <Text
-                        numberOfLines={2}
-                        adjustsFontSizeToFit
-                        className="max-w-[168px] text-sm font-extrabold"
-                        style={{ color: amountColor }}
-                      >
-                        {amountLabel}
-                      </Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t("common.delete")}
-                        hitSlop={8}
-                        onPress={(event) => {
-                          event.stopPropagation();
-                          confirmDelete(transaction);
-                        }}
-                      >
-                        <Ionicons
-                          name="trash-outline"
-                          size={16}
-                          color={colors.subtle}
-                        />
-                      </Pressable>
-                    </View>
+                  </Pressable>
+
+                  <View className="items-end gap-2">
+                    <Text
+                      numberOfLines={2}
+                      adjustsFontSizeToFit
+                      className="max-w-[168px] text-sm font-extrabold"
+                      style={{ color: amountColor }}
+                    >
+                      {amountLabel}
+                    </Text>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("common.delete")}
+                      hitSlop={8}
+                      onPress={() => confirmDelete(transaction)}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={colors.subtle}
+                      />
+                    </Pressable>
                   </View>
-                </Pressable>
+                </View>
               );
             })}
           </View>
@@ -672,405 +532,12 @@ export default function TransactionsScreen() {
         )}
       </ScrollView>
 
-      <Modal
+      <TransactionEditorModal
         visible={editorVisible}
-        transparent
-        animationType="slide"
-        statusBarTranslucent
-        onRequestClose={() => setEditorVisible(false)}
-      >
-        <KeyboardAvoidingView
-          className="flex-1 justify-end bg-black/50"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={vars(getThemeCssVariables(colors))}
-        >
-          <View
-            className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
-            style={{ paddingBottom: Math.max(insets.bottom, 12) }}
-          >
-            <View className="flex-row items-center justify-between border-b border-border px-5 py-4">
-              <View className="min-w-0 flex-1">
-                <Text className="text-lg font-extrabold text-foreground">
-                  {editingId
-                    ? t("transactions.editTransaction")
-                    : t("transactions.addTransaction")}
-                </Text>
-                <Text className="mt-1 text-xs text-muted">
-                  {t("transactions.editorDescription")}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => setEditorVisible(false)}
-                hitSlop={8}
-                className="h-9 w-9 items-center justify-center rounded-xl bg-surface"
-              >
-                <Ionicons name="close" size={21} color={colors.foreground} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              className="shrink"
-              contentContainerStyle={{
-                paddingHorizontal: 20,
-                paddingTop: 16,
-                paddingBottom: 16,
-                gap: 16,
-              }}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              <View className="flex-row gap-2">
-                {(
-                  [
-                    {
-                      value: "expense",
-                      label: t("transactions.expense"),
-                      icon: "arrow-up-outline",
-                    },
-                    {
-                      value: "income",
-                      label: t("transactions.income"),
-                      icon: "arrow-down-outline",
-                    },
-                    {
-                      value: "transfer",
-                      label: t("transactions.transfer"),
-                      icon: "swap-horizontal-outline",
-                    },
-                  ] as const
-                ).map((option) => {
-                  const selected = draftType === option.value;
-                  const tone =
-                    option.value === "income"
-                      ? colors.income
-                      : option.value === "expense"
-                        ? colors.expense
-                        : colors.accent;
-                  return (
-                    <Pressable
-                      key={option.value}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => chooseType(option.value)}
-                      className={`min-w-0 flex-1 items-center gap-1 rounded-[14px] border px-2 py-3 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
-                    >
-                      <Ionicons
-                        name={option.icon}
-                        size={20}
-                        color={selected ? tone : colors.subtle}
-                      />
-                      <Text
-                        numberOfLines={1}
-                        className={`text-xs font-bold ${selected ? "text-accent" : "text-muted"}`}
-                      >
-                        {option.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {t("transactions.amount")}
-                </Text>
-                <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                  <TextInput
-                    value={draftAmount}
-                    onChangeText={(value) => {
-                      setDraftAmount(value);
-                      setFormError("");
-                    }}
-                    placeholder="0"
-                    placeholderTextColor={colors.subtle}
-                    keyboardType="decimal-pad"
-                    className="min-w-0 flex-1 py-3 text-[24px] font-extrabold text-foreground"
-                    autoFocus={false}
-                  />
-                  <Text className="text-sm font-bold text-muted">
-                    {
-                      getCurrencyByCode(
-                        selectedAccount?.currencyCode ?? DEFAULT_CURRENCY_CODE,
-                      ).symbol
-                    }
-                  </Text>
-                </View>
-              </View>
-
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {draftType === "transfer"
-                    ? t("transactions.fromAccount")
-                    : t("transactions.account")}
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {accounts.map((account) => {
-                    const selected = draftAccountId === account.id;
-                    return (
-                      <Pressable
-                        key={account.id}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        onPress={() => {
-                          if (draftAccountId !== account.id) {
-                            setDraftAccountId(account.id);
-                            const destinationId =
-                              draftToAccountId === account.id
-                                ? (accounts.find(
-                                    (item) => item.id !== account.id,
-                                  )?.id ?? "")
-                                : draftToAccountId;
-                            setDraftToAccountId(destinationId);
-                            const destination = accounts.find(
-                              (item) => item.id === destinationId,
-                            );
-                            setDraftToAmount(
-                              destination &&
-                                destination.currencyCode ===
-                                  account.currencyCode
-                                ? draftAmount
-                                : "",
-                            );
-                          }
-                          setFormError("");
-                        }}
-                        className={`flex-row items-center gap-2 rounded-[13px] border px-3 py-2 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
-                      >
-                        <Ionicons
-                          name={account.icon}
-                          size={17}
-                          color={selected ? colors.accent : account.color}
-                        />
-                        <View className="min-w-0 gap-0.5">
-                          <Text
-                            numberOfLines={1}
-                            className={`max-w-[150px] text-xs font-semibold ${selected ? "text-accent" : "text-foreground"}`}
-                          >
-                            {account.name}
-                          </Text>
-                          <Text className="text-[10px] font-semibold text-subtle">
-                            {account.currencyCode}
-                          </Text>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                {accounts.length === 0 ? (
-                  <Pressable
-                    onPress={() => {
-                      setEditorVisible(false);
-                      router.push("/accounts");
-                    }}
-                    className="rounded-xl bg-accent-dark p-3"
-                  >
-                    <Text className="text-sm font-semibold text-accent">
-                      {t("transactions.createAccountFirst")}
-                    </Text>
-                  </Pressable>
-                ) : null}
-              </View>
-
-              {draftType === "transfer" ? (
-                <View className="gap-2">
-                  <Text className="text-sm font-semibold text-foreground">
-                    {t("transactions.toAccount")}
-                  </Text>
-                  <View className="flex-row flex-wrap gap-2">
-                    {accounts
-                      .filter((account) => account.id !== draftAccountId)
-                      .map((account) => {
-                        const selected = draftToAccountId === account.id;
-                        return (
-                          <Pressable
-                            key={account.id}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected }}
-                            onPress={() => {
-                              if (draftToAccountId !== account.id) {
-                                setDraftToAccountId(account.id);
-                                setDraftToAmount(
-                                  selectedAccount?.currencyCode ===
-                                    account.currencyCode
-                                    ? draftAmount
-                                    : "",
-                                );
-                              }
-                              setFormError("");
-                            }}
-                            className={`flex-row items-center gap-2 rounded-[13px] border px-3 py-2 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
-                          >
-                            <Ionicons
-                              name={account.icon}
-                              size={17}
-                              color={selected ? colors.accent : account.color}
-                            />
-                            <View className="min-w-0 gap-0.5">
-                              <Text
-                                numberOfLines={1}
-                                className={`max-w-[150px] text-xs font-semibold ${selected ? "text-accent" : "text-foreground"}`}
-                              >
-                                {account.name}
-                              </Text>
-                              <Text className="text-[10px] font-semibold text-subtle">
-                                {account.currencyCode}
-                              </Text>
-                            </View>
-                          </Pressable>
-                        );
-                      })}
-                  </View>
-                  {isCrossCurrencyTransfer ? (
-                    <View className="mt-2 gap-2">
-                      <Text className="text-sm font-semibold text-foreground">
-                        {t("transactions.receivedAmount")} (
-                        {selectedToAccount?.currencyCode})
-                      </Text>
-                      <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                        <TextInput
-                          value={draftToAmount}
-                          onChangeText={(value) => {
-                            setDraftToAmount(value);
-                            setFormError("");
-                          }}
-                          placeholder="0"
-                          placeholderTextColor={colors.subtle}
-                          keyboardType="decimal-pad"
-                          className="min-w-0 flex-1 py-3 text-[22px] font-extrabold text-foreground"
-                        />
-                        <Text className="text-sm font-bold text-muted">
-                          {
-                            getCurrencyByCode(
-                              selectedToAccount?.currencyCode ??
-                                DEFAULT_CURRENCY_CODE,
-                            ).symbol
-                          }
-                        </Text>
-                      </View>
-                      <Text className="text-xs leading-5 text-muted">
-                        {t("transactions.transferCurrencyHint")}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              ) : (
-                <View className="gap-2">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.category")}
-                    </Text>
-                    <Pressable
-                      onPress={() => {
-                        setEditorVisible(false);
-                        router.push("/categories");
-                      }}
-                    >
-                      <Text className="text-xs font-bold text-accent">
-                        {t("transactions.manageCategories")}
-                      </Text>
-                    </Pressable>
-                  </View>
-                  {draftCategories.length > 0 ? (
-                    <View className="flex-row flex-wrap gap-2">
-                      {draftCategories.map((category: Category) => {
-                        const selected = draftCategoryId === category.id;
-                        return (
-                          <Pressable
-                            key={category.id}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected }}
-                            onPress={() => setDraftCategoryId(category.id)}
-                            className={`flex-row items-center gap-2 rounded-[13px] border px-3 py-2 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
-                          >
-                            <Ionicons
-                              name={category.icon}
-                              size={17}
-                              color={selected ? colors.accent : category.color}
-                            />
-                            <Text
-                              numberOfLines={1}
-                              className={`max-w-[155px] text-xs font-semibold ${selected ? "text-accent" : "text-foreground"}`}
-                            >
-                              {category.name}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  ) : (
-                    <Text className="text-sm leading-5 text-muted">
-                      {t("transactions.noCategories")}
-                    </Text>
-                  )}
-                </View>
-              )}
-
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {t("transactions.date")}
-                </Text>
-                <TextInput
-                  value={draftDate}
-                  onChangeText={(value) => {
-                    setDraftDate(value);
-                    setFormError("");
-                  }}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.subtle}
-                  className="rounded-[14px] border border-border bg-surface px-4 py-3 text-sm text-foreground"
-                  autoCapitalize="none"
-                />
-                <Text className="text-xs text-subtle">
-                  {t("transactions.dateFormatHint")}
-                </Text>
-              </View>
-
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">
-                  {t("transactions.note")}
-                </Text>
-                <TextInput
-                  value={draftNote}
-                  onChangeText={setDraftNote}
-                  placeholder={t("transactions.notePlaceholder")}
-                  placeholderTextColor={colors.subtle}
-                  className="rounded-[14px] border border-border bg-surface px-4 py-3 text-sm text-foreground"
-                  maxLength={120}
-                  returnKeyType="done"
-                />
-              </View>
-
-              {formError ? (
-                <Text className="text-sm font-semibold text-expense">
-                  {formError}
-                </Text>
-              ) : null}
-            </ScrollView>
-
-            <View className="flex-row gap-3 border-t border-border px-5 py-4">
-              <Pressable
-                onPress={() => setEditorVisible(false)}
-                className="min-h-[50px] flex-1 items-center justify-center rounded-[15px] border border-border bg-surface"
-              >
-                <Text className="font-bold text-foreground">
-                  {t("common.cancel")}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={saveTransaction}
-                className="min-h-[50px] flex-1 items-center justify-center rounded-[15px] bg-accent"
-              >
-                <Text
-                  className="font-bold"
-                  style={{ color: colors.accentContrastText }}
-                >
-                  {t("common.save")}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        initialType={editorInitialType}
+        transaction={editingTransaction}
+        onClose={() => setEditorVisible(false)}
+      />
     </View>
   );
 }

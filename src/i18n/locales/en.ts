@@ -75,6 +75,8 @@ const en = {
   dates: {
     today: "Today",
     yesterday: "Yesterday",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
   },
 
   transactions: {

@@ -75,6 +75,8 @@ const ru = {
   dates: {
     today: "Сегодня",
     yesterday: "Вчера",
+    previousMonth: "Предыдущий месяц",
+    nextMonth: "Следующий месяц",
   },
 
   transactions: {

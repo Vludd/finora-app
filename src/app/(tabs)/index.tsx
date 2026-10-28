@@ -5,18 +5,19 @@ import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useAccounts } from "@/shared/context/AccountContext";
-import { useTransactions } from "@/shared/context/TransactionContext";
 import { useCurrency } from "@/shared/context/CurrencyContext";
+import { useTransactions } from "@/shared/context/TransactionContext";
 import {
   CURRENCIES,
   DEFAULT_CURRENCY_CODE,
   getCurrencyByCode,
 } from "@/shared/lib/currencies";
 import { formatCurrency } from "@/shared/lib/format";
-import CurrencyPicker from "@/shared/ui/CurrencyPicker";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import TransactionEditorModal from "@/shared/transactions/TransactionEditorModal";
 import type { TransactionType } from "@/shared/transactions/transactionTypes";
 import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
+import CurrencyPicker from "@/shared/ui/CurrencyPicker";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type WeekdayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
@@ -52,6 +53,8 @@ export default function HomeScreen() {
   const { currencyCode, setCurrencyCode } = useCurrency();
   const router = useRouter();
   const [balanceVisible, setBalanceVisible] = useState(true);
+  const [quickTransactionType, setQuickTransactionType] =
+    useState<TransactionType | null>(null);
 
   const currencyOptions = useMemo(() => {
     const codes = new Set(
@@ -84,7 +87,9 @@ export default function HomeScreen() {
         continue;
       }
 
-      const account = accounts.find((item) => item.id === transaction.accountId);
+      const account = accounts.find(
+        (item) => item.id === transaction.accountId,
+      );
       if (
         !account ||
         (account.currencyCode ?? DEFAULT_CURRENCY_CODE) !== currencyCode
@@ -117,7 +122,9 @@ export default function HomeScreen() {
         if (transaction.type !== "expense" || transaction.date !== dateKey) {
           return total;
         }
-        const account = accounts.find((item) => item.id === transaction.accountId);
+        const account = accounts.find(
+          (item) => item.id === transaction.accountId,
+        );
         return (account?.currencyCode ?? DEFAULT_CURRENCY_CODE) === currencyCode
           ? total + transaction.amount
           : total;
@@ -141,10 +148,7 @@ export default function HomeScreen() {
   };
 
   const openQuickTransaction = (type: TransactionType) => {
-    router.push({
-      pathname: "/(tabs)/transactions",
-      params: { create: "1", type },
-    });
+    setQuickTransactionType(type);
   };
 
   return (
@@ -358,6 +362,12 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <TransactionEditorModal
+        visible={quickTransactionType !== null}
+        initialType={quickTransactionType ?? "expense"}
+        onClose={() => setQuickTransactionType(null)}
+      />
     </View>
   );
 }

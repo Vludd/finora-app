@@ -42,7 +42,8 @@
           "enforceContrast": false,
           "style": "light"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
