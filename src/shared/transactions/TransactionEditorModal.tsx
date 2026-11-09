@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { vars } from "nativewind";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  Animated,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -19,12 +21,12 @@ import { useAccounts } from "@/shared/context/AccountContext";
 import { useCategories } from "@/shared/context/CategoryContext";
 import { useCurrency } from "@/shared/context/CurrencyContext";
 import { useTransactions } from "@/shared/context/TransactionContext";
+import { blurWebFocus } from "@/shared/lib/blurWebFocus";
 import {
   DEFAULT_CURRENCY_CODE,
   getCurrencyByCode,
 } from "@/shared/lib/currencies";
 import { useTheme } from "@/shared/theme/ThemeContext";
-import { blurWebFocus } from "@/shared/lib/blurWebFocus";
 import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import type {
   Transaction,
@@ -82,6 +84,125 @@ export default function TransactionEditorModal({
   const [draftDate, setDraftDate] = useState(localDateString());
   const [draftNote, setDraftNote] = useState("");
   const [formError, setFormError] = useState("");
+  const translateY = useRef(new Animated.Value(0)).current;
+  const isDismissing = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const browserHistoryEntry = useRef(false);
+  const suppressPopState = useRef(false);
+
+  // Treat browser/device Back as a modal dismissal while the editor is open.
+  // A temporary same-URL history entry prevents Expo Router from popping the
+  // underlying screen first.
+  useEffect(() => {
+    if (!visible || Platform.OS !== "web" || typeof window === "undefined") {
+      return;
+    }
+
+    suppressPopState.current = false;
+    window.history.pushState(
+      { finoraTransactionModal: true },
+      "",
+      window.location.href,
+    );
+    browserHistoryEntry.current = true;
+
+    const handlePopState = () => {
+      if (suppressPopState.current) {
+        suppressPopState.current = false;
+        browserHistoryEntry.current = false;
+        return;
+      }
+
+      if (browserHistoryEntry.current) {
+        browserHistoryEntry.current = false;
+        onCloseRef.current();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      // If the modal was dismissed by another action, consume its history
+      // entry so the next Back action does not appear to do nothing.
+      if (browserHistoryEntry.current) {
+        suppressPopState.current = true;
+        window.history.back();
+        browserHistoryEntry.current = false;
+      }
+    };
+  }, [visible]);
+
+  function closeModal() {
+    if (
+      Platform.OS === "web" &&
+      browserHistoryEntry.current &&
+      typeof window !== "undefined"
+    ) {
+      suppressPopState.current = true;
+      browserHistoryEntry.current = false;
+      window.history.back();
+    }
+    onCloseRef.current();
+  }
+
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(0);
+      isDismissing.current = false;
+    }
+  }, [visible, translateY]);
+
+  const dismissPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => visible && !isDismissing.current,
+        onMoveShouldSetPanResponder: (_event, gestureState) =>
+          visible &&
+          !isDismissing.current &&
+          gestureState.dy > 6 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderMove: (_event, gestureState) => {
+          if (gestureState.dy > 0) {
+            translateY.setValue(gestureState.dy);
+          }
+        },
+        onPanResponderRelease: (_event, gestureState) => {
+          const shouldDismiss = gestureState.dy > 110 || gestureState.vy > 0.9;
+
+          if (shouldDismiss) {
+            isDismissing.current = true;
+            Animated.timing(translateY, {
+              toValue: 700,
+              duration: 180,
+              useNativeDriver: Platform.OS !== "web",
+            }).start(({ finished }) => {
+              if (finished) closeModal();
+            });
+            return;
+          }
+
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: Platform.OS !== "web",
+            damping: 24,
+            stiffness: 260,
+            mass: 0.8,
+          }).start();
+        },
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderTerminate: () => {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: Platform.OS !== "web",
+            damping: 24,
+            stiffness: 260,
+            mass: 0.8,
+          }).start();
+        },
+      }),
+    [translateY, visible],
+  );
 
   useEffect(() => {
     if (!visible) return;
@@ -216,7 +337,7 @@ export default function TransactionEditorModal({
     };
     if (transaction) updateTransaction(transaction.id, draft);
     else addTransaction(draft);
-    onClose();
+    closeModal();
   }
 
   const typeOptions = [
@@ -243,17 +364,30 @@ export default function TransactionEditorModal({
       transparent
       animationType="slide"
       statusBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={closeModal}
     >
       <KeyboardAvoidingView
         className="flex-1 justify-end bg-black/50"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={vars(getThemeCssVariables(colors))}
       >
-        <View
+        <Animated.View
           className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
-          style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+          style={{
+            // Modal is rendered in a portal on Web; set the surface colors
+            // explicitly so the animated wrapper never falls back to transparent.
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, 12),
+            transform: [{ translateY }],
+          }}
         >
+          <View
+            className="items-center pb-2 pt-3"
+            {...dismissPanResponder.panHandlers}
+          >
+            <View className="h-1.5 w-10 rounded-full bg-muted" />
+          </View>
           <View className="flex-row items-center justify-between border-b border-border px-5 py-4">
             <View className="min-w-0 flex-1">
               <Text className="text-lg font-extrabold text-foreground">
@@ -268,7 +402,7 @@ export default function TransactionEditorModal({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("common.cancel")}
-              onPress={onClose}
+              onPress={closeModal}
               hitSlop={8}
               className="h-9 w-9 items-center justify-center rounded-xl bg-surface"
             >
@@ -399,7 +533,7 @@ export default function TransactionEditorModal({
               {accounts.length === 0 ? (
                 <Pressable
                   onPress={() => {
-                    onClose();
+                    closeModal();
                     router.push("/accounts");
                   }}
                   className="rounded-xl bg-accent-dark p-3"
@@ -550,7 +684,7 @@ export default function TransactionEditorModal({
                   <Pressable
                     onPress={(event) => {
                       blurWebFocus(event.currentTarget);
-                      onClose();
+                      closeModal();
                       router.push("/categories");
                     }}
                   >
@@ -603,7 +737,7 @@ export default function TransactionEditorModal({
 
           <View className="flex-row gap-3 border-t border-border px-5 py-4">
             <Pressable
-              onPress={onClose}
+              onPress={closeModal}
               className="min-h-[50px] flex-1 items-center justify-center rounded-[15px] border border-border bg-surface"
             >
               <Text className="font-bold text-foreground">
@@ -622,7 +756,7 @@ export default function TransactionEditorModal({
               </Text>
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
