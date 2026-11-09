@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, View } from "react-native";
 
 import { useTheme } from "@/shared/theme/ThemeContext";
+import { blurWebFocus } from "@/shared/lib/blurWebFocus";
 
 type Props = {
   showSettings?: boolean;
@@ -31,7 +32,10 @@ export default function HeaderActions({ showSettings = true }: Props) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("settings.title")}
-          onPress={() => router.push("/settings")}
+          onPress={(event) => {
+            blurWebFocus(event.currentTarget);
+            router.push("/settings");
+          }}
           className="h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-surface"
         >
           <Ionicons

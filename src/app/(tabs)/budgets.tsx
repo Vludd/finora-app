@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useCategories } from "@/shared/context/CategoryContext";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import { blurWebFocus } from "@/shared/lib/blurWebFocus";
 
 export default function BudgetsScreen() {
   const { t } = useTranslation();
@@ -16,7 +17,8 @@ export default function BudgetsScreen() {
     (category) => category.type === "expense",
   );
 
-  const openCategorySettings = () => {
+  const openCategorySettings = (target?: unknown) => {
+    blurWebFocus(target);
     router.push("/categories");
   };
 
@@ -57,7 +59,7 @@ export default function BudgetsScreen() {
 
           <Pressable
             accessibilityRole="button"
-            onPress={openCategorySettings}
+            onPress={(event) => openCategorySettings(event.currentTarget)}
             className="min-h-12 flex-row items-center justify-center gap-2 rounded-[15px] bg-accent px-4 py-3"
           >
             <Ionicons
@@ -131,7 +133,7 @@ export default function BudgetsScreen() {
               </Text>
               <Pressable
                 accessibilityRole="button"
-                onPress={openCategorySettings}
+                onPress={(event) => openCategorySettings(event.currentTarget)}
                 className="mt-3 rounded-[13px] bg-accent-dark px-4 py-2.5"
               >
                 <Text className="text-sm font-bold text-accent">

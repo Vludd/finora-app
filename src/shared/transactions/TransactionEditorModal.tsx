@@ -24,6 +24,7 @@ import {
   getCurrencyByCode,
 } from "@/shared/lib/currencies";
 import { useTheme } from "@/shared/theme/ThemeContext";
+import { blurWebFocus } from "@/shared/lib/blurWebFocus";
 import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import type {
   Transaction,
@@ -547,7 +548,8 @@ export default function TransactionEditorModal({
                     {t("transactions.category")}
                   </Text>
                   <Pressable
-                    onPress={() => {
+                    onPress={(event) => {
+                      blurWebFocus(event.currentTarget);
                       onClose();
                       router.push("/categories");
                     }}

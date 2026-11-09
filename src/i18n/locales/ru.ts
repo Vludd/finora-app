@@ -3,7 +3,7 @@ const ru = {
     appName: "Finora",
     appSlogan: "ТВОИ ФИНАНСЫ",
     demo: "ДЕМО",
-    demoPlaceholder: "Этот раздел добавим в следующих версиях.",
+    demoPlaceholder: "Этот раздел появится в следующих версиях.",
     inDev: "В РАЗРАБОТКЕ",
     loading: "Загрузка…",
     cancel: "Отмена",
