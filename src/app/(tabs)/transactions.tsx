@@ -28,6 +28,18 @@ import {
 
 type FilterType = "all" | "income" | "expense" | "transfer";
 
+type WeekdayKey = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
+
+type WeeklySpendingItem = {
+  day: WeekdayKey;
+  value: number;
+  highlighted: boolean;
+};
+
+const weekdayKeys: WeekdayKey[] = [
+  "sun", "mon", "tue", "wed", "thu", "fri", "sat",
+];
+
 function localDateString(date = new Date()): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -119,6 +131,32 @@ export default function TransactionsScreen() {
 
     return totals;
   }, [transactions, accounts, currencyCode]);
+
+  const weeklySpending = useMemo<WeeklySpendingItem[]>(() => {
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (6 - index));
+      const dateKey = localDateString(date);
+      const value = transactions.reduce((total, transaction) => {
+        if (transaction.type !== "expense" || transaction.date !== dateKey) {
+          return total;
+        }
+        const account = accounts.find((item) => item.id === transaction.accountId);
+        return (account?.currencyCode ?? DEFAULT_CURRENCY_CODE) === currencyCode
+          ? total + transaction.amount
+          : total;
+      }, 0);
+      return {
+        day: weekdayKeys[date.getDay()],
+        value,
+        highlighted: index === 6,
+      };
+    });
+  }, [transactions, accounts, currencyCode]);
+
+  const weeklyTotal = weeklySpending.reduce((total, item) => total + item.value, 0);
+  const weeklyMax = Math.max(1, ...weeklySpending.map((item) => item.value));
 
   const selectedCurrency = getCurrencyByCode(currencyCode);
   const monthIncomeDisplay = formatCurrency(
@@ -254,6 +292,41 @@ export default function TransactionsScreen() {
           <Text className="text-xs font-semibold text-subtle">
             {t("transactions.currencyFilter", { currency: currencyCode })}
           </Text>
+        </View>
+
+        <View className="gap-3 rounded-[21px] border border-border bg-surface p-4">
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="flex-1 gap-1">
+              <Text className="text-[16px] font-extrabold text-foreground">
+                {t("home.weeklySpending")}
+              </Text>
+              <Text className="text-xs text-subtle">{t("home.last7Days")}</Text>
+            </View>
+            <View className="items-end">
+              <Text className="text-[11px] text-subtle">{t("home.chartTotal")}</Text>
+              <Text className="mt-1 text-[15px] font-extrabold text-foreground">
+                {formatCurrency(weeklyTotal, selectedCurrency)}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-row justify-between gap-2">
+            {weeklySpending.map((item, index) => (
+              <View key={`${item.day}-${index}`} className="flex-1 items-center gap-2">
+                <View className="h-[94px] w-full max-w-[31px] justify-end overflow-hidden rounded-[9px] bg-surface-raised">
+                  <View
+                    className="w-full rounded-[9px]"
+                    style={{
+                      height: item.value > 0 ? `${Math.max((item.value / weeklyMax) * 100, 6)}%` : "0%",
+                      backgroundColor: item.highlighted ? colors.accent : colors.chartBar,
+                    }}
+                  />
+                </View>
+                <Text className={`text-[11px] font-semibold ${item.highlighted ? "font-extrabold text-accent" : "text-subtle"}`}>
+                  {t(`weekdays.${item.day}`)}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         <View className="flex-row gap-3">
