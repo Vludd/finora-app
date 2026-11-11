@@ -245,6 +245,18 @@ export default function TransferEditorModal({
     closeModal();
   }
 
+  function swapAccounts() {
+    if (!fromId || !toId) return;
+
+    setFromId(toId);
+    setToId(fromId);
+
+    setAmount(toAmount);
+    setToAmount(amount);
+
+    setError("");
+  }
+
   const accountPicker = (kind: "from" | "to") => (
     <Modal
       visible={picker === kind}
@@ -395,12 +407,21 @@ export default function TransferEditorModal({
           >
             {accountField("from")}
             <View className="items-center">
-              <View className="rounded-full bg-accent-dark p-2">
-                <Ionicons
-                  name="swap-vertical"
-                  size={19}
-                  color={colors.accent}
-                />
+              <View className="items-center">
+                <Pressable
+                  onPress={swapAccounts}
+                  disabled={!fromId || !toId}
+                  accessibilityRole="button"
+                  accessibilityLabel="Поменять счета местами"
+                  hitSlop={10}
+                  className="rounded-full border border-border bg-accent-dark p-3 active:opacity-60"
+                >
+                  <Ionicons
+                    name="swap-vertical"
+                    size={20}
+                    color={colors.accent}
+                  />
+                </Pressable>
               </View>
             </View>
             {accountField("to")}
