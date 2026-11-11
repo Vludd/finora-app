@@ -464,54 +464,56 @@ export default function TransactionEditorModal({
               <Text className="text-sm font-semibold text-foreground">
                 {t("transactions.account")}
               </Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setAccountPickerVisible(true)}
-                className="flex-row items-center gap-3 rounded-[14px] border border-border bg-surface px-3 py-3"
-              >
-                {selectedAccount ? (
+              {accounts.length !== 0 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setAccountPickerVisible(true)}
+                  className="flex-row items-center gap-3 rounded-[14px] border border-border bg-surface px-3 py-3"
+                >
+                  {selectedAccount ? (
+                    <Ionicons
+                      name={selectedAccount.icon}
+                      size={20}
+                      color={selectedAccount.color}
+                    />
+                  ) : (
+                    <Ionicons
+                      name="wallet-outline"
+                      size={20}
+                      color={colors.subtle}
+                    />
+                  )}
+                  <View className="min-w-0 flex-1 gap-0.5">
+                    <Text
+                      numberOfLines={1}
+                      className="text-sm font-semibold text-foreground"
+                    >
+                      {selectedAccount?.name ?? t("transactions.selectAccount")}
+                    </Text>
+                    <Text className="text-xs text-muted">
+                      {selectedAccount
+                        ? `${selectedAccount.currencyCode} · ${t("transactions.currentBalance")}`
+                        : t("transactions.chooseAccountHint")}
+                    </Text>
+                  </View>
+                  <Text className="text-sm font-extrabold text-foreground">
+                    {selectedAccount && selectedAccountBalance !== null
+                      ? formatCurrency(
+                          selectedAccountBalance,
+                          getCurrencyByCode(
+                            selectedAccount.currencyCode ??
+                              DEFAULT_CURRENCY_CODE,
+                          ),
+                        )
+                      : ""}
+                  </Text>
                   <Ionicons
-                    name={selectedAccount.icon}
-                    size={20}
-                    color={selectedAccount.color}
-                  />
-                ) : (
-                  <Ionicons
-                    name="wallet-outline"
-                    size={20}
+                    name="chevron-forward"
+                    size={17}
                     color={colors.subtle}
                   />
-                )}
-                <View className="min-w-0 flex-1 gap-0.5">
-                  <Text
-                    numberOfLines={1}
-                    className="text-sm font-semibold text-foreground"
-                  >
-                    {selectedAccount?.name ?? t("transactions.selectAccount")}
-                  </Text>
-                  <Text className="text-xs text-muted">
-                    {selectedAccount
-                      ? `${selectedAccount.currencyCode} · ${t("transactions.currentBalance")}`
-                      : t("transactions.chooseAccountHint")}
-                  </Text>
-                </View>
-                <Text className="text-sm font-extrabold text-foreground">
-                  {selectedAccount && selectedAccountBalance !== null
-                    ? formatCurrency(
-                        selectedAccountBalance,
-                        getCurrencyByCode(
-                          selectedAccount.currencyCode ?? DEFAULT_CURRENCY_CODE,
-                        ),
-                      )
-                    : ""}
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={17}
-                  color={colors.subtle}
-                />
-              </Pressable>
-              {accounts.length === 0 ? (
+                </Pressable>
+              ) : (
                 <Pressable
                   onPress={() => {
                     closeModal();
@@ -523,7 +525,7 @@ export default function TransactionEditorModal({
                     {t("transactions.createAccountFirst")}
                   </Text>
                 </Pressable>
-              ) : null}
+              )}
             </View>
 
             {/* Category selector */}
@@ -724,7 +726,16 @@ export default function TransactionEditorModal({
                 <Ionicons name="close" size={22} color={colors.foreground} />
               </Pressable>
             </View>
-            <ScrollView keyboardShouldPersistTaps="handled">
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                paddingBottom: 4,
+              }}
+            >
               {draftCategories.map((category) => {
                 const selected = category.id === draftCategoryId;
                 return (
@@ -734,43 +745,62 @@ export default function TransactionEditorModal({
                       setDraftCategoryId(category.id);
                       setCategoryPickerVisible(false);
                     }}
-                    className={`mb-2 flex-row items-center gap-3 rounded-xl border p-3 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    className={`relative mb-2 w-[48.5%] min-h-[104px] items-center justify-center gap-2 rounded-xl border px-3 py-4 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
                   >
                     <Ionicons
                       name={category.icon}
-                      size={20}
+                      size={25}
                       color={category.color}
                     />
-                    <Text className="flex-1 font-semibold text-foreground">
+                    <Text
+                      numberOfLines={2}
+                      className="w-full text-center text-sm font-semibold text-foreground"
+                    >
                       {category.name}
                     </Text>
                     {selected ? (
-                      <Ionicons
-                        name="checkmark-circle"
-                        color={colors.accent}
-                        size={19}
-                      />
+                      <View className="absolute right-2 top-2">
+                        <Ionicons
+                          name="checkmark-circle"
+                          color={colors.accent}
+                          size={18}
+                        />
+                      </View>
                     ) : null}
                   </Pressable>
                 );
               })}
               {draftCategories.length === 0 ? (
-                <Text className="py-4 text-sm text-muted">
+                <Text className="w-full py-4 text-sm text-muted">
                   {t("transactions.noCategories")}
                 </Text>
               ) : null}
             </ScrollView>
             <Pressable
+              accessibilityRole="button"
               onPress={() => {
                 setCategoryPickerVisible(false);
                 closeModal();
                 router.push("/categories");
               }}
-              className="mt-3 rounded-xl bg-accent-dark px-4 py-3"
+              className="mt-2 min-h-10 flex-row items-center justify-center gap-2 py-2 active:opacity-60"
+              hitSlop={8}
             >
-              <Text className="text-center text-sm font-bold text-accent">
+              <Ionicons
+                name="settings-outline"
+                size={16}
+                color={colors.subtle}
+              />
+              <Text className="text-sm font-semibold text-muted">
                 {t("transactions.manageCategories")}
               </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={14}
+                color={colors.subtle}
+              />
             </Pressable>
           </View>
         </View>
