@@ -3,9 +3,9 @@ import "../../global.css";
 import { LinearGradient } from "expo-linear-gradient";
 import { NavigationBar } from "expo-navigation-bar";
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, View } from "react-native";
+import { ActivityIndicator, Platform, StatusBar, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors as defaultColors } from "@/constants/theme";
@@ -51,16 +51,27 @@ function AppNavigator() {
   const insets = useSafeAreaInsets();
 
   const isDark = resolvedColorScheme === "dark";
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    NavigationBar.setStyle(isDark ? "dark" : "light");
+    void SystemUI.setBackgroundColorAsync(colors.background).catch((error) => {
+      console.warn("Failed to update Android window background", error);
+    });
+  }, [isDark, colors.background]);
+
   const statusBarHeight = Math.max(insets.top, 24);
   const gradientHeight = statusBarHeight + 12;
 
   return (
-    <>
-      <StatusBar style={isDark ? "light" : "dark"} />
-
-      {Platform.OS === "android" && (
-        <NavigationBar style={isDark ? "light" : "dark"} />
-      )}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+        translucent={false}
+        animated
+      />
 
       <Stack
         screenOptions={{
@@ -105,7 +116,7 @@ function AppNavigator() {
           }}
         />
       )}
-    </>
+    </View>
   );
 }
 

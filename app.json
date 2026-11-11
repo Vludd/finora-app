@@ -43,7 +43,8 @@
           "style": "light"
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-system-ui"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -51,14 +52,11 @@
     },
     "extra": {
       "router": {},
-      "expo-navigation-bar": {
-        "enforceContrast": false,
-        "style": "light"
-      },
       "eas": {
         "projectId": "ddf37c30-e2ec-4efa-8a8a-5516232327bc"
       }
     },
-    "owner": "vludd.exe"
+    "owner": "vludd.exe",
+    "backgroundColor": "#090A0D"
   }
 }
