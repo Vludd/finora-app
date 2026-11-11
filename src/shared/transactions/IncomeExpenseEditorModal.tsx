@@ -783,7 +783,7 @@ export default function TransactionEditorModal({
               onPress={() => {
                 setCategoryPickerVisible(false);
                 closeModal();
-                router.push("/categories");
+                setTimeout(() => router.push("/categories"), 350);
               }}
               className="mt-2 min-h-10 flex-row items-center justify-center gap-2 py-2 active:opacity-60"
               hitSlop={8}
