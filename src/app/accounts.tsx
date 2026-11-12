@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 
 import type {
   Account,
@@ -37,6 +38,7 @@ import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import { calculateAccountBalance } from "@/shared/transactions/transactionTypes";
 import AppHeader from "@/shared/ui/AppHeader";
 import { SafeAreaView } from "@/shared/ui/SafeAreaView";
+import { useBottomSheetDismissGesture } from "@/shared/ui/useBottomSheetDismissGesture";
 
 const accountIcons: AccountIcon[] = [
   "card-outline",
@@ -203,6 +205,15 @@ export default function AccountsScreen({
     [editorVisible, translateY],
   );
 
+  const { panGesture: nativeDismissGesture, scrollGesture } =
+    useBottomSheetDismissGesture({
+      enabled: Platform.OS === "android" && editorVisible,
+      translateY,
+      scrollOffsetY,
+      isDismissing,
+      onDismiss: closeEditor,
+    });
+
   const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts();
   const { transactions } = useTransactions();
 
@@ -220,6 +231,7 @@ export default function AccountsScreen({
   useEffect(() => {
     if (editorVisible) {
       translateY.setValue(0);
+      scrollOffsetY.current = 0;
       isDismissing.current = false;
     }
   }, [editorVisible, translateY]);
@@ -359,6 +371,7 @@ export default function AccountsScreen({
         </Pressable>
       </View>
 
+      <GestureDetector gesture={scrollGesture}>
       <ScrollView
         style={{ flexShrink: 1 }}
         onScroll={(event) => {
@@ -627,6 +640,7 @@ export default function AccountsScreen({
           />
         </View>
       </ScrollView>
+      </GestureDetector>
 
       <View
         className="border-t border-border bg-background px-0 pt-3"
@@ -796,6 +810,7 @@ export default function AccountsScreen({
 
         {Platform.OS === "web" ? (
           editorVisible && (
+            <GestureHandlerRootView style={{ flex: 1 }}>
             <View
               style={{
                 position: "absolute",
@@ -827,6 +842,7 @@ export default function AccountsScreen({
                   zIndex: 1,
                 }}
               >
+                <GestureDetector gesture={nativeDismissGesture}>
                 <Animated.View
                   style={{
                     transform: [{ translateY }],
@@ -839,8 +855,10 @@ export default function AccountsScreen({
                 >
                   {editorSheet}
                 </Animated.View>
+                </GestureDetector>
               </KeyboardAvoidingView>
             </View>
+            </GestureHandlerRootView>
           )
         ) : (
           <Modal
@@ -850,6 +868,7 @@ export default function AccountsScreen({
             statusBarTranslucent
             onRequestClose={() => setEditorVisible(false)}
           >
+            <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardAvoidingView
               className="flex-1 justify-end"
               behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -861,8 +880,9 @@ export default function AccountsScreen({
                 onPress={closeEditor}
                 className="absolute inset-0 bg-black/50"
               />
+              <GestureDetector gesture={nativeDismissGesture}>
               <Animated.View
-                {...panResponder.panHandlers}
+                {...(Platform.OS !== "android" ? panResponder.panHandlers : {})}
                 style={{
                   transform: [{ translateY }],
                   backgroundColor: colors.background,
@@ -874,7 +894,9 @@ export default function AccountsScreen({
               >
                 {editorSheet}
               </Animated.View>
+              </GestureDetector>
             </KeyboardAvoidingView>
+            </GestureHandlerRootView>
           </Modal>
         )}
       </SafeAreaView>
