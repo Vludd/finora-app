@@ -1,13 +1,19 @@
+import { formatAmountInput } from "@/shared/lib/format";
 import { memo, useState } from "react";
 import { TextInput, type TextInputProps } from "react-native";
-import { GestureDetector, type GestureType } from "react-native-gesture-handler";
-import { formatAmountInput } from "@/shared/lib/format";
+import {
+  GestureDetector,
+  type GestureType,
+} from "react-native-gesture-handler";
 
 type Props = {
   initialValue: string;
   onValueChange: (value: string) => void;
   gesture?: GestureType;
-} & Pick<TextInputProps, "placeholder" | "placeholderTextColor" | "className" | "style">;
+} & Pick<
+  TextInputProps,
+  "placeholder" | "placeholderTextColor" | "className" | "style"
+>;
 
 function FormattedAmountInputComponent({
   initialValue,
@@ -19,6 +25,9 @@ function FormattedAmountInputComponent({
   const input = (
     <TextInput
       {...inputProps}
+      // Keep the amount typography explicit: Android can intermittently fall
+      // back to the TextInput default when NativeWind updates class styles.
+      style={[inputProps.style, { fontWeight: "800" }]}
       value={value}
       onChangeText={(text) => {
         const formatted = formatAmountInput(text);
@@ -29,7 +38,11 @@ function FormattedAmountInputComponent({
     />
   );
 
-  return gesture ? <GestureDetector gesture={gesture}>{input}</GestureDetector> : input;
+  return gesture ? (
+    <GestureDetector gesture={gesture}>{input}</GestureDetector>
+  ) : (
+    input
+  );
 }
 
 export const FormattedAmountInput = memo(FormattedAmountInputComponent);
