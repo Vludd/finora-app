@@ -63,6 +63,29 @@ export function formatCurrency(
     .join("");
 }
 
+
+/** Formats an editable amount with spaces between thousands groups. */
+export function formatAmountInput(value: string): string {
+  const cleaned = value.replace(/[^0-9.,]/g, "");
+  const separatorIndex = cleaned.search(/[.,]/);
+  const hasSeparator = separatorIndex >= 0;
+  const integerPart = (hasSeparator ? cleaned.slice(0, separatorIndex) : cleaned)
+    .replace(/[.,]/g, "");
+  const decimalPart = hasSeparator
+    ? cleaned.slice(separatorIndex + 1).replace(/[.,]/g, "")
+    : "";
+  const groupedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+  return hasSeparator
+    ? `${groupedInteger},${decimalPart}`
+    : groupedInteger;
+}
+
+/** Converts a formatted editable amount into a number-friendly string. */
+export function normalizeAmountInput(value: string): string {
+  return value.replace(/[\s\u00A0\u202F]/g, "").replace(",", ".");
+}
+
 export function formatMonthYear(date: Date): string {
   const locale = getCurrentLocale();
 

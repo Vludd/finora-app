@@ -4,7 +4,7 @@ import {
   DEFAULT_CURRENCY_CODE,
   getCurrencyByCode,
 } from "@/shared/lib/currencies";
-import { formatCurrency } from "@/shared/lib/format";
+import { formatAmountInput, formatCurrency, normalizeAmountInput } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
 import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import {
@@ -196,8 +196,8 @@ export default function TransferEditorModal({
       if (transaction?.type === "transfer") {
         setFromId(transaction.accountId);
         setToId(transaction.toAccountId ?? "");
-        setAmount(String(transaction.amount));
-        setToAmount(String(transaction.toAmount ?? transaction.amount));
+        setAmount(formatAmountInput(String(transaction.amount)));
+        setToAmount(formatAmountInput(String(transaction.toAmount ?? transaction.amount)));
         setDate(transaction.date);
         setNote(transaction.note ?? "");
       } else {
@@ -226,9 +226,9 @@ export default function TransferEditorModal({
   }, [visible, transaction, accounts]);
 
   function save() {
-    const value = Number(amount.replace(",", ".").trim());
+    const value = Number(normalizeAmountInput(amount));
     const credited = crossCurrency
-      ? Number(toAmount.replace(",", ".").trim())
+      ? Number(normalizeAmountInput(toAmount))
       : value;
     if (!Number.isFinite(value) || value <= 0) {
       setError(t("validation.amountMustBePositive"));
@@ -483,7 +483,7 @@ export default function TransferEditorModal({
                 <GestureDetector gesture={amountInputGesture}>
                 <TextInput
                   value={amount}
-                  onChangeText={setAmount}
+                  onChangeText={(value) => setAmount(formatAmountInput(value))}
                   placeholder="0"
                   placeholderTextColor={colors.subtle}
                   keyboardType="decimal-pad"
@@ -508,7 +508,7 @@ export default function TransferEditorModal({
                   <GestureDetector gesture={toAmountInputGesture}>
                   <TextInput
                     value={toAmount}
-                    onChangeText={setToAmount}
+                    onChangeText={(value) => setToAmount(formatAmountInput(value))}
                     placeholder="0"
                     placeholderTextColor={colors.subtle}
                     keyboardType="decimal-pad"

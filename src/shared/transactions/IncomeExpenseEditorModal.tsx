@@ -27,7 +27,7 @@ import {
   DEFAULT_CURRENCY_CODE,
   getCurrencyByCode,
 } from "@/shared/lib/currencies";
-import { formatCurrency } from "@/shared/lib/format";
+import { formatAmountInput, formatCurrency, normalizeAmountInput } from "@/shared/lib/format";
 import { useTheme } from "@/shared/theme/ThemeContext";
 import { getThemeCssVariables } from "@/shared/theme/themeVariables";
 import {
@@ -237,7 +237,7 @@ export default function TransactionEditorModal({
 
     if (transaction) {
       setDraftType(transaction.type);
-      setDraftAmount(String(transaction.amount));
+      setDraftAmount(formatAmountInput(String(transaction.amount)));
       setDraftAccountId(transaction.accountId);
       setDraftCategoryId(transaction.categoryId ?? "");
       setDraftDate(transaction.date);
@@ -308,7 +308,7 @@ export default function TransactionEditorModal({
   }
 
   function saveTransaction() {
-    const amount = Number(draftAmount.replace(",", ".").trim());
+    const amount = Number(normalizeAmountInput(draftAmount));
     if (!Number.isFinite(amount) || amount <= 0) {
       setFormError(t("validation.amountMustBePositive"));
       return;
@@ -480,7 +480,7 @@ export default function TransactionEditorModal({
                 <TextInput
                   value={draftAmount}
                   onChangeText={(value) => {
-                    setDraftAmount(value);
+                    setDraftAmount(formatAmountInput(value));
                     setFormError("");
                   }}
                   placeholder="0"
