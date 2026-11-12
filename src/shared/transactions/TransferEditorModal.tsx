@@ -13,6 +13,7 @@ import {
   type TransactionDraft,
 } from "@/shared/transactions/transactionTypes";
 import DatePickerField from "@/shared/ui/DatePickerField";
+import { FormattedAmountInput } from "@/shared/ui/FormattedAmountInput";
 import { useBottomSheetDismissGesture } from "@/shared/ui/useBottomSheetDismissGesture";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -56,8 +57,9 @@ export default function TransferEditorModal({
   const { transactions, addTransaction, updateTransaction } = useTransactions();
   const [fromId, setFromId] = useState("");
   const [toId, setToId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [toAmount, setToAmount] = useState("");
+  const amountRef = useRef("");
+  const toAmountRef = useRef("");
+  const [amountFieldsVersion, setAmountFieldsVersion] = useState(0);
   const [date, setDate] = useState(today());
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -193,11 +195,12 @@ export default function TransferEditorModal({
     if (!visible) return;
     let active = true;
     const initialize = async () => {
+      setAmountFieldsVersion(0);
       if (transaction?.type === "transfer") {
         setFromId(transaction.accountId);
         setToId(transaction.toAccountId ?? "");
-        setAmount(formatAmountInput(String(transaction.amount)));
-        setToAmount(formatAmountInput(String(transaction.toAmount ?? transaction.amount)));
+        amountRef.current = formatAmountInput(String(transaction.amount));
+        toAmountRef.current = formatAmountInput(String(transaction.toAmount ?? transaction.amount));
         setDate(transaction.date);
         setNote(transaction.note ?? "");
       } else {
@@ -212,8 +215,8 @@ export default function TransferEditorModal({
         if (!active) return;
         setFromId(first?.id ?? "");
         setToId(second?.id ?? "");
-        setAmount("");
-        setToAmount("");
+        amountRef.current = "";
+        toAmountRef.current = "";
         setDate(today());
         setNote("");
       }
@@ -226,9 +229,9 @@ export default function TransferEditorModal({
   }, [visible, transaction, accounts]);
 
   function save() {
-    const value = Number(normalizeAmountInput(amount));
+    const value = Number(normalizeAmountInput(amountRef.current));
     const credited = crossCurrency
-      ? Number(normalizeAmountInput(toAmount))
+      ? Number(normalizeAmountInput(toAmountRef.current))
       : value;
     if (!Number.isFinite(value) || value <= 0) {
       setError(t("validation.amountMustBePositive"));
@@ -281,8 +284,10 @@ export default function TransferEditorModal({
     setFromId(toId);
     setToId(fromId);
 
-    setAmount(toAmount);
-    setToAmount(amount);
+    const currentAmount = amountRef.current;
+    amountRef.current = toAmountRef.current;
+    toAmountRef.current = currentAmount;
+    setAmountFieldsVersion((version) => version + 1);
 
     setError("");
   }
@@ -480,16 +485,15 @@ export default function TransferEditorModal({
                 {from ? ` · ${from.currencyCode}` : ""}
               </Text>
               <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                <GestureDetector gesture={amountInputGesture}>
-                <TextInput
-                  value={amount}
-                  onChangeText={(value) => setAmount(formatAmountInput(value))}
+                <FormattedAmountInput
+                  key={`from-${visible}-${transaction?.id ?? "new"}-${amountFieldsVersion}`}
+                  initialValue={amountFieldsVersion > 0 ? amountRef.current : transaction?.type === "transfer" ? formatAmountInput(String(transaction.amount)) : ""}
+                  onValueChange={(value) => { amountRef.current = value; }}
+                  gesture={amountInputGesture}
                   placeholder="0"
                   placeholderTextColor={colors.subtle}
-                  keyboardType="decimal-pad"
                   className="min-w-0 flex-1 py-3 text-[24px] font-extrabold text-foreground"
                 />
-                </GestureDetector>
                 <Text className="font-bold text-muted">
                   {
                     getCurrencyByCode(
@@ -505,16 +509,15 @@ export default function TransferEditorModal({
                   {t("transactions.receivedAmount")} · {to?.currencyCode}
                 </Text>
                 <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                  <GestureDetector gesture={toAmountInputGesture}>
-                  <TextInput
-                    value={toAmount}
-                    onChangeText={(value) => setToAmount(formatAmountInput(value))}
+                  <FormattedAmountInput
+                    key={`to-${visible}-${transaction?.id ?? "new"}-${amountFieldsVersion}`}
+                    initialValue={amountFieldsVersion > 0 ? toAmountRef.current : transaction?.type === "transfer" ? formatAmountInput(String(transaction.toAmount ?? transaction.amount)) : ""}
+                    onValueChange={(value) => { toAmountRef.current = value; }}
+                    gesture={toAmountInputGesture}
                     placeholder="0"
                     placeholderTextColor={colors.subtle}
-                    keyboardType="decimal-pad"
                     className="min-w-0 flex-1 py-3 text-[22px] font-extrabold text-foreground"
                   />
-                  </GestureDetector>
                   <Text className="font-bold text-muted">
                     {
                       getCurrencyByCode(

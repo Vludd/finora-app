@@ -66,19 +66,39 @@ export function formatCurrency(
 
 /** Formats an editable amount with spaces between thousands groups. */
 export function formatAmountInput(value: string): string {
-  const cleaned = value.replace(/[^0-9.,]/g, "");
-  const separatorIndex = cleaned.search(/[.,]/);
-  const hasSeparator = separatorIndex >= 0;
-  const integerPart = (hasSeparator ? cleaned.slice(0, separatorIndex) : cleaned)
-    .replace(/[.,]/g, "");
-  const decimalPart = hasSeparator
-    ? cleaned.slice(separatorIndex + 1).replace(/[.,]/g, "")
-    : "";
-  const groupedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  // Keep the hot path used by TextInput lightweight: avoid multiple regex passes
+  // and don't rebuild grouping for short values that cannot contain thousands.
+  let integerPart = "";
+  let decimalPart = "";
+  let hasSeparator = false;
 
-  return hasSeparator
-    ? `${groupedInteger},${decimalPart}`
-    : groupedInteger;
+  for (let i = 0; i < value.length; i += 1) {
+    const char = value[i];
+
+    if (char >= "0" && char <= "9") {
+      if (hasSeparator) decimalPart += char;
+      else integerPart += char;
+      continue;
+    }
+
+    if ((char === "." || char === ",") && !hasSeparator) {
+      hasSeparator = true;
+    }
+  }
+
+  if (integerPart.length <= 3) {
+    return hasSeparator ? `${integerPart},${decimalPart}` : integerPart;
+  }
+
+  let groupedInteger = "";
+  const firstGroupLength = integerPart.length % 3 || 3;
+  groupedInteger = integerPart.slice(0, firstGroupLength);
+
+  for (let i = firstGroupLength; i < integerPart.length; i += 3) {
+    groupedInteger += ` ${integerPart.slice(i, i + 3)}`;
+  }
+
+  return hasSeparator ? `${groupedInteger},${decimalPart}` : groupedInteger;
 }
 
 /** Converts a formatted editable amount into a number-friendly string. */

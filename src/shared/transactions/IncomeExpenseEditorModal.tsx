@@ -37,6 +37,7 @@ import {
   type TransactionType,
 } from "@/shared/transactions/transactionTypes";
 import DatePickerField from "@/shared/ui/DatePickerField";
+import { FormattedAmountInput } from "@/shared/ui/FormattedAmountInput";
 import { useBottomSheetDismissGesture } from "@/shared/ui/useBottomSheetDismissGesture";
 
 type TransactionEditorModalProps = {
@@ -80,7 +81,7 @@ export default function TransactionEditorModal({
   const { transactions, addTransaction, updateTransaction } = useTransactions();
 
   const [draftType, setDraftType] = useState<TransactionType>(initialType);
-  const [draftAmount, setDraftAmount] = useState("");
+  const draftAmountRef = useRef("");
   const [draftAccountId, setDraftAccountId] = useState("");
   const [draftCategoryId, setDraftCategoryId] = useState("");
   const [draftDate, setDraftDate] = useState(localDateString());
@@ -237,7 +238,7 @@ export default function TransactionEditorModal({
 
     if (transaction) {
       setDraftType(transaction.type);
-      setDraftAmount(formatAmountInput(String(transaction.amount)));
+      draftAmountRef.current = formatAmountInput(String(transaction.amount));
       setDraftAccountId(transaction.accountId);
       setDraftCategoryId(transaction.categoryId ?? "");
       setDraftDate(transaction.date);
@@ -263,7 +264,7 @@ export default function TransactionEditorModal({
       );
       const sourceAccount = remembered ?? preferred ?? accounts[0];
       setDraftType(initialType);
-      setDraftAmount("");
+      draftAmountRef.current = "";
       setDraftAccountId(sourceAccount?.id ?? "");
       setDraftCategoryId(
         categories.find((category) => category.type === initialType)?.id ?? "",
@@ -308,7 +309,7 @@ export default function TransactionEditorModal({
   }
 
   function saveTransaction() {
-    const amount = Number(normalizeAmountInput(draftAmount));
+    const amount = Number(normalizeAmountInput(draftAmountRef.current));
     if (!Number.isFinite(amount) || amount <= 0) {
       setFormError(t("validation.amountMustBePositive"));
       return;
@@ -476,19 +477,18 @@ export default function TransactionEditorModal({
                 {t("transactions.amount")}
               </Text>
               <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                <GestureDetector gesture={amountInputGesture}>
-                <TextInput
-                  value={draftAmount}
-                  onChangeText={(value) => {
-                    setDraftAmount(formatAmountInput(value));
-                    setFormError("");
+                <FormattedAmountInput
+                  key={`${visible}-${transaction?.id ?? "new"}`}
+                  initialValue={transaction ? formatAmountInput(String(transaction.amount)) : ""}
+                  onValueChange={(value) => {
+                    draftAmountRef.current = value;
+                    if (formError) setFormError("");
                   }}
+                  gesture={amountInputGesture}
                   placeholder="0"
                   placeholderTextColor={colors.subtle}
-                  keyboardType="decimal-pad"
                   className="min-w-0 flex-1 py-3 text-[24px] font-extrabold text-foreground"
                 />
-                </GestureDetector>
                 <Text className="text-sm font-bold text-muted">
                   {
                     getCurrencyByCode(
