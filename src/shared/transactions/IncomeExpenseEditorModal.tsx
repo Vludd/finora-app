@@ -87,6 +87,7 @@ export default function TransactionEditorModal({
   const [accountPickerVisible, setAccountPickerVisible] = useState(false);
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
   const translateY = useRef(new Animated.Value(0)).current;
+  const scrollOffsetY = useRef(0);
   const isDismissing = useRef(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -158,10 +159,17 @@ export default function TransactionEditorModal({
   const dismissPanResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => visible && !isDismissing.current,
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponderCapture: (_event, gestureState) =>
+          visible &&
+          !isDismissing.current &&
+          scrollOffsetY.current <= 0 &&
+          gestureState.dy > 6 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
         onMoveShouldSetPanResponder: (_event, gestureState) =>
           visible &&
           !isDismissing.current &&
+          scrollOffsetY.current <= 0 &&
           gestureState.dy > 6 &&
           Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
         onPanResponderMove: (_event, gestureState) => {
@@ -352,6 +360,7 @@ export default function TransactionEditorModal({
           accessibilityLabel={t("common.cancel")}
         />
         <Animated.View
+          {...dismissPanResponder.panHandlers}
           className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
           style={{
             // Modal is rendered in a portal on Web; set the surface colors
@@ -363,8 +372,7 @@ export default function TransactionEditorModal({
           }}
         >
           <View
-            className="items-center pb-2 pt-3"
-            {...dismissPanResponder.panHandlers}
+            className="items-center justify-center pb-2 pt-3" style={{ minHeight: 40 }}
           >
             <View className="h-1.5 w-10 rounded-full bg-muted" />
           </View>
@@ -392,6 +400,10 @@ export default function TransactionEditorModal({
 
           <ScrollView
             className="shrink"
+            onScroll={(event) => {
+              scrollOffsetY.current = Math.max(0, event.nativeEvent.contentOffset.y);
+            }}
+            scrollEventThrottle={16}
             contentContainerStyle={{
               paddingHorizontal: 20,
               paddingTop: 16,

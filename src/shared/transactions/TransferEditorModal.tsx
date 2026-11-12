@@ -61,6 +61,7 @@ export default function TransferEditorModal({
   const [error, setError] = useState("");
   const [picker, setPicker] = useState<"from" | "to" | null>(null);
   const translateY = useRef(new Animated.Value(0)).current;
+  const scrollOffsetY = useRef(0);
   const historyEntry = useRef(false);
   const suppressPop = useRef(false);
   const closeRef = useRef(onClose);
@@ -119,9 +120,15 @@ export default function TransferEditorModal({
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => visible,
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponderCapture: (_event, gesture) =>
+          visible &&
+          scrollOffsetY.current <= 0 &&
+          gesture.dy > 6 &&
+          Math.abs(gesture.dy) > Math.abs(gesture.dx),
         onMoveShouldSetPanResponder: (_event, gesture) =>
           visible &&
+          scrollOffsetY.current <= 0 &&
           gesture.dy > 6 &&
           Math.abs(gesture.dy) > Math.abs(gesture.dx),
         onPanResponderMove: (_event, gesture) => {
@@ -380,6 +387,7 @@ export default function TransferEditorModal({
           accessibilityLabel={t("common.cancel")}
         />
         <Animated.View
+          {...panResponder.panHandlers}
           className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
           style={{
             backgroundColor: colors.background,
@@ -389,8 +397,7 @@ export default function TransferEditorModal({
           }}
         >
           <View
-            className="items-center pb-2 pt-3"
-            {...panResponder.panHandlers}
+            className="items-center justify-center pb-2 pt-3" style={{ minHeight: 40 }}
           >
             <View className="h-1.5 w-10 rounded-full bg-muted" />
           </View>
@@ -414,6 +421,10 @@ export default function TransferEditorModal({
           </View>
           <ScrollView
             className="shrink"
+            onScroll={(event) => {
+              scrollOffsetY.current = Math.max(0, event.nativeEvent.contentOffset.y);
+            }}
+            scrollEventThrottle={16}
             contentContainerStyle={{ padding: 20, gap: 15 }}
             keyboardShouldPersistTaps="handled"
           >

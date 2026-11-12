@@ -143,14 +143,28 @@ export default function AccountsScreen({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(0)).current;
+  const scrollOffsetY = useRef(0);
   const isDismissing = useRef(false);
+
+  const [editorVisible, setEditorVisible] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const closeEditor = () => setEditorVisible(false);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => !isDismissing.current,
-        onMoveShouldSetPanResponder: (_event, gesture) =>
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponderCapture: (_event, gesture) =>
+          editorVisible &&
           !isDismissing.current &&
+          scrollOffsetY.current <= 0 &&
+          gesture.dy > 6 &&
+          Math.abs(gesture.dy) > Math.abs(gesture.dx),
+        onMoveShouldSetPanResponder: (_event, gesture) =>
+          editorVisible &&
+          !isDismissing.current &&
+          scrollOffsetY.current <= 0 &&
           gesture.dy > 6 &&
           Math.abs(gesture.dy) > Math.abs(gesture.dx),
         onPanResponderMove: (_event, gesture) => {
@@ -186,14 +200,12 @@ export default function AccountsScreen({
             mass: 0.8,
           }).start(),
       }),
-    [translateY],
+    [editorVisible, translateY],
   );
 
   const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts();
   const { transactions } = useTransactions();
 
-  const [editorVisible, setEditorVisible] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [draftType, setDraftType] = useState<AccountType>("card");
   const [draftIcon, setDraftIcon] = useState<AccountIcon>("card-outline");
@@ -318,15 +330,15 @@ export default function AccountsScreen({
   const editorSheet = (
     <View
       className="rounded-t-[28px] bg-background px-4 pt-4"
-      style={{
-        maxHeight: "92%",
-        paddingBottom: Math.max(insets.bottom + 8, 20),
-      }}
+      style={{ flexShrink: 1 }}
     >
-      <View className="items-center pb-3 pt-1">
+      <View
+        className="items-center justify-center pb-2 pt-3"
+        style={{ minHeight: 40 }}
+      >
         <View className="h-1.5 w-10 rounded-full bg-muted" />
       </View>
-      <View className="mb-3 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between border-b border-border px-0 pb-4 pt-1">
         <View className="flex-1 pr-3">
           <Text className="text-[21px] font-extrabold text-foreground">
             {editingId
@@ -348,6 +360,14 @@ export default function AccountsScreen({
       </View>
 
       <ScrollView
+        style={{ flexShrink: 1 }}
+        onScroll={(event) => {
+          scrollOffsetY.current = Math.max(
+            0,
+            event.nativeEvent.contentOffset.y,
+          );
+        }}
+        scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerClassName="gap-5 pb-3"
@@ -606,7 +626,12 @@ export default function AccountsScreen({
             style={{ backgroundColor: draftColor }}
           />
         </View>
+      </ScrollView>
 
+      <View
+        className="border-t border-border bg-background px-0 pt-3"
+        style={{ paddingBottom: Math.max(insets.bottom, 8) }}
+      >
         <Pressable
           accessibilityRole="button"
           onPress={saveAccount}
@@ -619,7 +644,7 @@ export default function AccountsScreen({
             {t("common.save")}
           </Text>
         </Pressable>
-      </ScrollView>
+      </View>
     </View>
   );
 
@@ -803,7 +828,6 @@ export default function AccountsScreen({
                 }}
               >
                 <Animated.View
-                  {...panResponder.panHandlers}
                   style={{
                     transform: [{ translateY }],
                     backgroundColor: colors.background,
