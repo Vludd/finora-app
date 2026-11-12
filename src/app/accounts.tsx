@@ -15,8 +15,11 @@ import {
   TextInput,
   View,
 } from "react-native";
+import {
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 
 import type {
   Account,
@@ -101,6 +104,10 @@ const accountIcons: AccountIcon[] = [
   "train-outline",
   "bus-outline",
   "bicycle-outline",
+  "storefront-outline",
+  "calculator-outline",
+  "diamond-outline",
+  "medical-outline",
   "ellipsis-horizontal-circle-outline",
   "grid-outline",
 ];
@@ -123,7 +130,9 @@ const accountColors = [
   "#EC4899",
   "#F43F5E",
   "#EF4444",
+  "#64748B",
   "#78716C",
+  "#A1A1AA",
 ];
 
 const accountTypes: {
@@ -372,287 +381,287 @@ export default function AccountsScreen({
       </View>
 
       <GestureDetector gesture={scrollGesture}>
-      <ScrollView
-        style={{ flexShrink: 1 }}
-        onScroll={(event) => {
-          scrollOffsetY.current = Math.max(
-            0,
-            event.nativeEvent.contentOffset.y,
-          );
-        }}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentContainerClassName="gap-5 pb-3"
-      >
-        <View className="gap-2">
-          <Text className="text-sm font-semibold text-foreground">
-            {t("accounts.manage.accountType")}
-          </Text>
-          <View className="flex-row gap-2">
-            {accountTypes.map((type) => {
-              const selected = draftType === type.value;
-              return (
-                <Pressable
-                  key={type.value}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => chooseType(type.value)}
-                  className="min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border px-2 py-3"
-                  style={{
-                    backgroundColor: selected
-                      ? `${type.color}18`
-                      : colors.surface,
-                    borderColor: selected ? type.color : colors.border,
-                  }}
-                >
-                  <Ionicons
-                    name={type.icon}
-                    size={22}
-                    color={selected ? type.color : colors.muted}
-                  />
-                  <Text className="text-center text-xs font-semibold text-foreground">
-                    {t(`accounts.types.${type.value}`)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        <View className="gap-2">
-          <Text className="text-sm font-semibold text-foreground">
-            {t("accounts.accountName")}
-          </Text>
-          <TextInput
-            value={draftName}
-            onChangeText={(value) => {
-              setDraftName(value);
-              if (value.trim()) setNameError(false);
-            }}
-            placeholder={t("accounts.accountNamePlaceholder")}
-            placeholderTextColor={colors.subtle}
-            maxLength={40}
-            returnKeyType="done"
-            className={`min-h-[50px] rounded-[14px] border bg-surface px-3 text-[15px] text-foreground ${nameError ? "border-expense" : "border-border"}`}
-            accessibilityLabel={t("accounts.accountName")}
-          />
-          {nameError && (
-            <Text className="text-xs text-expense">
-              {t("accounts.manage.nameRequired")}
-            </Text>
-          )}
-        </View>
-
-        <View className="gap-2">
-          <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-sm font-semibold text-foreground">
-              {t("accounts.manage.currency")}
-            </Text>
-            <Text className="text-xs font-bold text-accent">
-              {draftCurrencyCode}
-            </Text>
-          </View>
-          {editingId &&
-          transactions.some(
-            (transaction) =>
-              transaction.accountId === editingId ||
-              transaction.toAccountId === editingId,
-          ) ? (
-            <Text className="text-xs leading-5 text-muted">
-              {t("accounts.manage.currencyLocked")}
-            </Text>
-          ) : null}
-          <TextInput
-            value={currencySearch}
-            onChangeText={setCurrencySearch}
-            placeholder={t("accounts.manage.currencySearch")}
-            placeholderTextColor={colors.subtle}
-            className="min-h-[44px] rounded-[13px] border border-border bg-surface px-3 text-sm text-foreground"
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityLabel={t("accounts.manage.currency")}
-          />
+        <ScrollView
+          style={{ flexShrink: 1 }}
+          onScroll={(event) => {
+            scrollOffsetY.current = Math.max(
+              0,
+              event.nativeEvent.contentOffset.y,
+            );
+          }}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerClassName="gap-5 pb-3"
+        >
           <View className="gap-2">
-            {visibleCurrencies.map((item) => {
-              const selected = draftCurrencyCode === item.code;
-              const locked = Boolean(
-                editingId &&
-                transactions.some(
-                  (transaction) =>
-                    transaction.accountId === editingId ||
-                    transaction.toAccountId === editingId,
-                ),
-              );
-              return (
-                <Pressable
-                  key={item.code}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected, disabled: locked }}
-                  disabled={locked}
-                  onPress={() => setDraftCurrencyCode(item.code)}
-                  className="min-h-[48px] flex-row items-center gap-3 rounded-[13px] border px-3 py-2"
-                  style={{
-                    borderColor: selected ? colors.accent : colors.border,
-                    backgroundColor: selected
-                      ? colors.accentDark
-                      : colors.surface,
-                    opacity: locked ? 0.65 : 1,
-                  }}
-                >
-                  <View className="h-8 w-8 items-center justify-center rounded-[10px] bg-surface-raised">
-                    <Text className="text-sm font-bold text-foreground">
-                      {item.symbol}
-                    </Text>
-                  </View>
-                  <View className="min-w-0 flex-1 gap-0.5">
-                    <Text className="text-xs font-semibold text-foreground">
-                      {item.name[currentLanguage]}
-                    </Text>
-                    <Text className="text-[10px] font-bold tracking-[0.6px] text-subtle">
-                      {item.code}
-                    </Text>
-                  </View>
-                  {selected ? (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={19}
-                      color={colors.accent}
-                    />
-                  ) : null}
-                </Pressable>
-              );
-            })}
-            {filteredCurrencies.length === 0 ? (
-              <Text className="text-sm text-muted">
-                {t("accounts.manage.noCurrenciesFound")}
-              </Text>
-            ) : null}
-          </View>
-          {!isSearchingCurrency && filteredCurrencies.length > 5 ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setShowAllCurrencies((value) => !value)}
-              className="min-h-[42px] flex-row items-center justify-center gap-2 rounded-[13px] border border-border px-3"
-            >
-              <Text className="text-xs font-semibold text-accent">
-                {showAllCurrencies
-                  ? t("accounts.manage.hideAdditionalCurrencies")
-                  : t("accounts.manage.showAllCurrencies")}
-              </Text>
-              <Ionicons
-                name={showAllCurrencies ? "chevron-up" : "chevron-down"}
-                size={17}
-                color={colors.accent}
-              />
-            </Pressable>
-          ) : null}
-        </View>
-
-        <View className="gap-2">
-          <Text className="text-sm font-semibold text-foreground">
-            {t("accounts.manage.chooseIcon")}
-          </Text>
-          <View className="flex-row flex-wrap justify-between gap-y-2">
-            {accountIcons.map((iconName) => {
-              const selected = draftIcon === iconName;
-              return (
-                <Pressable
-                  key={iconName}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={iconName
-                    .replace(/-outline$/, "")
-                    .replace(/-/g, " ")}
-                  onPress={() => setDraftIcon(iconName)}
-                  className="w-[15.5%] items-center justify-center rounded-[12px] border"
-                  style={{
-                    height: 58,
-                    padding: 0,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: selected
-                      ? `${draftColor}20`
-                      : colors.surface,
-                    borderColor: selected ? draftColor : colors.border,
-                  }}
-                >
-                  <View
+            <Text className="text-sm font-semibold text-foreground">
+              {t("accounts.manage.accountType")}
+            </Text>
+            <View className="flex-row gap-2">
+              {accountTypes.map((type) => {
+                const selected = draftType === type.value;
+                return (
+                  <Pressable
+                    key={type.value}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => chooseType(type.value)}
+                    className="min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border px-2 py-3"
                     style={{
-                      width: 28,
-                      height: 28,
-                      alignItems: "center",
-                      justifyContent: "center",
+                      backgroundColor: selected
+                        ? `${type.color}18`
+                        : colors.surface,
+                      borderColor: selected ? type.color : colors.border,
                     }}
                   >
                     <Ionicons
-                      name={iconName}
+                      name={type.icon}
                       size={22}
-                      color={selected ? draftColor : colors.muted}
+                      color={selected ? type.color : colors.muted}
                     />
-                  </View>
-                </Pressable>
-              );
-            })}
+                    <Text className="text-center text-xs font-semibold text-foreground">
+                      {t(`accounts.types.${type.value}`)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-        </View>
 
-        <View className="gap-2">
-          <Text className="text-sm font-semibold text-foreground">
-            {t("accounts.manage.accentColor")}
-          </Text>
-          <View className="flex-row flex-wrap justify-between gap-y-3">
-            {accountColors.map((color) => {
-              const selected = draftColor === color;
-              return (
-                <Pressable
-                  key={color}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${t("accounts.manage.colorOption")} ${color}`}
-                  onPress={() => setDraftColor(color)}
-                  className="h-9 w-[9.5%] items-center justify-center rounded-full border-2"
-                  style={{
-                    backgroundColor: color,
-                    borderColor: selected ? colors.foreground : "transparent",
-                  }}
-                >
-                  {selected && (
-                    <Ionicons name="checkmark" size={17} color="#FFFFFF" />
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        <View className="flex-row items-center gap-3 rounded-[16px] border border-border bg-surface p-3">
-          <View
-            className="h-12 w-12 items-center justify-center rounded-[16px]"
-            style={{ backgroundColor: `${draftColor}20` }}
-          >
-            <Ionicons name={draftIcon} size={25} color={draftColor} />
-          </View>
-          <View className="min-w-0 flex-1">
-            <Text className="text-[10px] font-bold uppercase tracking-[1px] text-subtle">
-              {t("accounts.manage.preview")}
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">
+              {t("accounts.accountName")}
             </Text>
-            <Text
-              numberOfLines={1}
-              className="mt-1 text-sm font-bold text-foreground"
+            <TextInput
+              value={draftName}
+              onChangeText={(value) => {
+                setDraftName(value);
+                if (value.trim()) setNameError(false);
+              }}
+              placeholder={t("accounts.accountNamePlaceholder")}
+              placeholderTextColor={colors.subtle}
+              maxLength={40}
+              returnKeyType="done"
+              className={`min-h-[50px] rounded-[14px] border bg-surface px-3 text-[15px] text-foreground ${nameError ? "border-expense" : "border-border"}`}
+              accessibilityLabel={t("accounts.accountName")}
+            />
+            {nameError && (
+              <Text className="text-xs text-expense">
+                {t("accounts.manage.nameRequired")}
+              </Text>
+            )}
+          </View>
+
+          <View className="gap-2">
+            <View className="flex-row items-center justify-between gap-3">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("accounts.manage.currency")}
+              </Text>
+              <Text className="text-xs font-bold text-accent">
+                {draftCurrencyCode}
+              </Text>
+            </View>
+            {editingId &&
+            transactions.some(
+              (transaction) =>
+                transaction.accountId === editingId ||
+                transaction.toAccountId === editingId,
+            ) ? (
+              <Text className="text-xs leading-5 text-muted">
+                {t("accounts.manage.currencyLocked")}
+              </Text>
+            ) : null}
+            <TextInput
+              value={currencySearch}
+              onChangeText={setCurrencySearch}
+              placeholder={t("accounts.manage.currencySearch")}
+              placeholderTextColor={colors.subtle}
+              className="min-h-[44px] rounded-[13px] border border-border bg-surface px-3 text-sm text-foreground"
+              autoCapitalize="none"
+              autoCorrect={false}
+              accessibilityLabel={t("accounts.manage.currency")}
+            />
+            <View className="gap-2">
+              {visibleCurrencies.map((item) => {
+                const selected = draftCurrencyCode === item.code;
+                const locked = Boolean(
+                  editingId &&
+                  transactions.some(
+                    (transaction) =>
+                      transaction.accountId === editingId ||
+                      transaction.toAccountId === editingId,
+                  ),
+                );
+                return (
+                  <Pressable
+                    key={item.code}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected, disabled: locked }}
+                    disabled={locked}
+                    onPress={() => setDraftCurrencyCode(item.code)}
+                    className="min-h-[48px] flex-row items-center gap-3 rounded-[13px] border px-3 py-2"
+                    style={{
+                      borderColor: selected ? colors.accent : colors.border,
+                      backgroundColor: selected
+                        ? colors.accentDark
+                        : colors.surface,
+                      opacity: locked ? 0.65 : 1,
+                    }}
+                  >
+                    <View className="h-8 w-8 items-center justify-center rounded-[10px] bg-surface-raised">
+                      <Text className="text-sm font-bold text-foreground">
+                        {item.symbol}
+                      </Text>
+                    </View>
+                    <View className="min-w-0 flex-1 gap-0.5">
+                      <Text className="text-xs font-semibold text-foreground">
+                        {item.name[currentLanguage]}
+                      </Text>
+                      <Text className="text-[10px] font-bold tracking-[0.6px] text-subtle">
+                        {item.code}
+                      </Text>
+                    </View>
+                    {selected ? (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={19}
+                        color={colors.accent}
+                      />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+              {filteredCurrencies.length === 0 ? (
+                <Text className="text-sm text-muted">
+                  {t("accounts.manage.noCurrenciesFound")}
+                </Text>
+              ) : null}
+            </View>
+            {!isSearchingCurrency && filteredCurrencies.length > 5 ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setShowAllCurrencies((value) => !value)}
+                className="min-h-[42px] flex-row items-center justify-center gap-2 rounded-[13px] border border-border px-3"
+              >
+                <Text className="text-xs font-semibold text-accent">
+                  {showAllCurrencies
+                    ? t("accounts.manage.hideAdditionalCurrencies")
+                    : t("accounts.manage.showAllCurrencies")}
+                </Text>
+                <Ionicons
+                  name={showAllCurrencies ? "chevron-up" : "chevron-down"}
+                  size={17}
+                  color={colors.accent}
+                />
+              </Pressable>
+            ) : null}
+          </View>
+
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">
+              {t("accounts.manage.chooseIcon")}
+            </Text>
+            <View className="flex-row flex-wrap justify-between gap-y-2">
+              {accountIcons.map((iconName) => {
+                const selected = draftIcon === iconName;
+                return (
+                  <Pressable
+                    key={iconName}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={iconName
+                      .replace(/-outline$/, "")
+                      .replace(/-/g, " ")}
+                    onPress={() => setDraftIcon(iconName)}
+                    className="w-[15.5%] items-center justify-center rounded-[12px] border"
+                    style={{
+                      height: 58,
+                      padding: 0,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: selected
+                        ? `${draftColor}20`
+                        : colors.surface,
+                      borderColor: selected ? draftColor : colors.border,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 28,
+                        height: 28,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Ionicons
+                        name={iconName}
+                        size={22}
+                        color={selected ? draftColor : colors.muted}
+                      />
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">
+              {t("accounts.manage.accentColor")}
+            </Text>
+            <View className="flex-row flex-wrap justify-between gap-y-3">
+              {accountColors.map((color) => {
+                const selected = draftColor === color;
+                return (
+                  <Pressable
+                    key={color}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`${t("accounts.manage.colorOption")} ${color}`}
+                    onPress={() => setDraftColor(color)}
+                    className="h-9 w-[9.5%] items-center justify-center rounded-full border-2"
+                    style={{
+                      backgroundColor: color,
+                      borderColor: selected ? colors.foreground : "transparent",
+                    }}
+                  >
+                    {selected && (
+                      <Ionicons name="checkmark" size={17} color="#FFFFFF" />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View className="flex-row items-center gap-3 rounded-[16px] border border-border bg-surface p-3">
+            <View
+              className="h-12 w-12 items-center justify-center rounded-[16px]"
+              style={{ backgroundColor: `${draftColor}20` }}
             >
-              {draftName.trim() || t("accounts.accountNamePlaceholder")}
-            </Text>
-            <Text className="mt-1 text-xs text-muted">
-              {t(`accounts.types.${draftType}`)}
-            </Text>
+              <Ionicons name={draftIcon} size={25} color={draftColor} />
+            </View>
+            <View className="min-w-0 flex-1">
+              <Text className="text-[10px] font-bold uppercase tracking-[1px] text-subtle">
+                {t("accounts.manage.preview")}
+              </Text>
+              <Text
+                numberOfLines={1}
+                className="mt-1 text-sm font-bold text-foreground"
+              >
+                {draftName.trim() || t("accounts.accountNamePlaceholder")}
+              </Text>
+              <Text className="mt-1 text-xs text-muted">
+                {t(`accounts.types.${draftType}`)}
+              </Text>
+            </View>
+            <View
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: draftColor }}
+            />
           </View>
-          <View
-            className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: draftColor }}
-          />
-        </View>
-      </ScrollView>
+        </ScrollView>
       </GestureDetector>
 
       <View
@@ -824,53 +833,53 @@ export default function AccountsScreen({
         {Platform.OS === "web" ? (
           editorVisible && (
             <GestureHandlerRootView style={{ flex: 1 }}>
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                zIndex: 1000,
-                justifyContent: "flex-end",
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-              }}
-            >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("common.close")}
-                onPress={() => setEditorVisible(false)}
+              <View
                 style={{
                   position: "absolute",
                   top: 0,
                   right: 0,
                   bottom: 0,
                   left: 0,
-                }}
-              />
-              <KeyboardAvoidingView
-                style={{
-                  maxHeight: "100%",
+                  zIndex: 1000,
                   justifyContent: "flex-end",
-                  zIndex: 1,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
                 }}
               >
-                <GestureDetector gesture={nativeDismissGesture}>
-                <Animated.View
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("common.close")}
+                  onPress={() => setEditorVisible(false)}
                   style={{
-                    transform: [{ translateY }],
-                    backgroundColor: colors.background,
-                    maxHeight: "92%",
-                    borderTopLeftRadius: 28,
-                    borderTopRightRadius: 28,
-                    overflow: "hidden",
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                  }}
+                />
+                <KeyboardAvoidingView
+                  style={{
+                    maxHeight: "100%",
+                    justifyContent: "flex-end",
+                    zIndex: 1,
                   }}
                 >
-                  {editorSheet}
-                </Animated.View>
-                </GestureDetector>
-              </KeyboardAvoidingView>
-            </View>
+                  <GestureDetector gesture={nativeDismissGesture}>
+                    <Animated.View
+                      style={{
+                        transform: [{ translateY }],
+                        backgroundColor: colors.background,
+                        maxHeight: "92%",
+                        borderTopLeftRadius: 28,
+                        borderTopRightRadius: 28,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {editorSheet}
+                    </Animated.View>
+                  </GestureDetector>
+                </KeyboardAvoidingView>
+              </View>
             </GestureHandlerRootView>
           )
         ) : (
@@ -882,33 +891,35 @@ export default function AccountsScreen({
             onRequestClose={() => setEditorVisible(false)}
           >
             <GestureHandlerRootView style={{ flex: 1 }}>
-            <KeyboardAvoidingView
-              className="flex-1 justify-end"
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-              style={vars(getThemeCssVariables(colors))}
-            >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("common.close")}
-                onPress={closeEditor}
-                className="absolute inset-0 bg-black/50"
-              />
-              <GestureDetector gesture={nativeDismissGesture}>
-              <Animated.View
-                {...(Platform.OS !== "android" ? panResponder.panHandlers : {})}
-                style={{
-                  transform: [{ translateY }],
-                  backgroundColor: colors.background,
-                  maxHeight: "92%",
-                  borderTopLeftRadius: 28,
-                  borderTopRightRadius: 28,
-                  overflow: "hidden",
-                }}
+              <KeyboardAvoidingView
+                className="flex-1 justify-end"
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                style={vars(getThemeCssVariables(colors))}
               >
-                {editorSheet}
-              </Animated.View>
-              </GestureDetector>
-            </KeyboardAvoidingView>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("common.close")}
+                  onPress={closeEditor}
+                  className="absolute inset-0 bg-black/50"
+                />
+                <GestureDetector gesture={nativeDismissGesture}>
+                  <Animated.View
+                    {...(Platform.OS !== "android"
+                      ? panResponder.panHandlers
+                      : {})}
+                    style={{
+                      transform: [{ translateY }],
+                      backgroundColor: colors.background,
+                      maxHeight: "92%",
+                      borderTopLeftRadius: 28,
+                      borderTopRightRadius: 28,
+                      overflow: "hidden",
+                    }}
+                  >
+                    {editorSheet}
+                  </Animated.View>
+                </GestureDetector>
+              </KeyboardAvoidingView>
             </GestureHandlerRootView>
           </Modal>
         )}
