@@ -268,6 +268,12 @@ export default function TransferEditorModal({
         className="flex-1 justify-end bg-black/50"
         style={vars(getThemeCssVariables(colors))}
       >
+        <Pressable
+          className="absolute inset-0"
+          onPress={() => setPicker(null)}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+        />
         <View
           className="max-h-[70%] rounded-t-[24px] border border-border bg-background p-5"
           style={[
@@ -367,6 +373,12 @@ export default function TransferEditorModal({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={vars(getThemeCssVariables(colors))}
       >
+        <Pressable
+          className="absolute inset-0"
+          onPress={closeModal}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+        />
         <Animated.View
           className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
           style={{

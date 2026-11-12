@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { vars } from "nativewind";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
+  Animated,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -140,6 +142,53 @@ export default function AccountsScreen({
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const translateY = useRef(new Animated.Value(0)).current;
+  const isDismissing = useRef(false);
+  const closeEditor = () => setEditorVisible(false);
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => !isDismissing.current,
+        onMoveShouldSetPanResponder: (_event, gesture) =>
+          !isDismissing.current &&
+          gesture.dy > 6 &&
+          Math.abs(gesture.dy) > Math.abs(gesture.dx),
+        onPanResponderMove: (_event, gesture) => {
+          if (gesture.dy > 0) translateY.setValue(gesture.dy);
+        },
+        onPanResponderRelease: (_event, gesture) => {
+          if (gesture.dy > 110 || gesture.vy > 0.9) {
+            isDismissing.current = true;
+            Animated.timing(translateY, {
+              toValue: 700,
+              duration: 180,
+              useNativeDriver: Platform.OS !== "web",
+            }).start(({ finished }) => {
+              if (finished) closeEditor();
+            });
+          } else {
+            Animated.spring(translateY, {
+              toValue: 0,
+              useNativeDriver: Platform.OS !== "web",
+              damping: 24,
+              stiffness: 260,
+              mass: 0.8,
+            }).start();
+          }
+        },
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderTerminate: () =>
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: Platform.OS !== "web",
+            damping: 24,
+            stiffness: 260,
+            mass: 0.8,
+          }).start(),
+      }),
+    [translateY],
+  );
+
   const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts();
   const { transactions } = useTransactions();
 
@@ -155,6 +204,13 @@ export default function AccountsScreen({
   const [currencySearch, setCurrencySearch] = useState("");
   const [showAllCurrencies, setShowAllCurrencies] = useState(false);
   const [nameError, setNameError] = useState(false);
+
+  useEffect(() => {
+    if (editorVisible) {
+      translateY.setValue(0);
+      isDismissing.current = false;
+    }
+  }, [editorVisible, translateY]);
 
   const currentLanguage =
     (i18n.resolvedLanguage ?? i18n.language) === "ru" ? "ru" : "en";
@@ -267,6 +323,9 @@ export default function AccountsScreen({
         paddingBottom: Math.max(insets.bottom + 8, 20),
       }}
     >
+      <View className="items-center pb-3 pt-1">
+        <View className="h-1.5 w-10 rounded-full bg-muted" />
+      </View>
       <View className="mb-3 flex-row items-center justify-between">
         <View className="flex-1 pr-3">
           <Text className="text-[21px] font-extrabold text-foreground">
@@ -579,187 +638,221 @@ export default function AccountsScreen({
             {t("accounts.description")}
           </Text>
 
-        <View className="flex-row flex-wrap gap-2">
-          {accountTypes.map((type) => (
-            <View
-              key={type.value}
-              className="flex-1 basis-[30%] items-center gap-2 rounded-[16px] border border-border bg-surface px-2 py-3"
-            >
+          <View className="flex-row flex-wrap gap-2">
+            {accountTypes.map((type) => (
               <View
-                className="h-10 w-10 items-center justify-center rounded-[13px]"
-                style={{ backgroundColor: `${type.color}20` }}
+                key={type.value}
+                className="flex-1 basis-[30%] items-center gap-2 rounded-[16px] border border-border bg-surface px-2 py-3"
               >
-                <Ionicons name={type.icon} size={22} color={type.color} />
-              </View>
-              <Text className="text-center text-xs font-semibold text-foreground">
-                {t(`accounts.types.${type.value}`)}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={openCreateEditor}
-          className="min-h-[58px] flex-row items-center justify-center gap-2 rounded-[17px] bg-accent px-4"
-        >
-          <Ionicons
-            name="add-circle-outline"
-            size={22}
-            color={colors.accentContrastText}
-          />
-          <Text
-            className="text-[15px] font-bold"
-            style={{ color: colors.accentContrastText }}
-          >
-            {t("accounts.addAccount")}
-          </Text>
-        </Pressable>
-
-        {accounts.length > 0 ? (
-          <View className="gap-3">
-            {accounts.map((account) => (
-              <View
-                key={account.id}
-                className="rounded-[19px] border border-border bg-surface p-4"
-              >
-                <View className="flex-row items-center gap-3">
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t("common.edit")}: ${account.name}`}
-                    onPress={() => openEditEditor(account)}
-                    className="h-[54px] w-[54px] items-center justify-center rounded-[17px]"
-                    style={{ backgroundColor: `${account.color}20` }}
-                  >
-                    <Ionicons
-                      name={account.icon}
-                      size={26}
-                      color={account.color}
-                    />
-                  </Pressable>
-
-                  <View className="min-w-0 flex-1 gap-1">
-                    <Text
-                      numberOfLines={1}
-                      className="text-[15px] font-bold text-foreground"
-                    >
-                      {account.name}
-                    </Text>
-                    <Text className="text-xs text-muted">
-                      {t(`accounts.types.${account.type}`)} ·{" "}
-                      {account.currencyCode}
-                    </Text>
-                    <Text className="text-sm font-extrabold text-foreground">
-                      {formatCurrency(
-                        calculateAccountBalance(account.id, transactions),
-                        getCurrencyByCode(account.currencyCode),
-                      )}
-                    </Text>
-                  </View>
-
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t("common.edit")}: ${account.name}`}
-                    hitSlop={5}
-                    onPress={() => openEditEditor(account)}
-                    className="h-9 w-9 items-center justify-center rounded-[11px]"
-                  >
-                    <Ionicons
-                      name="create-outline"
-                      size={19}
-                      color={colors.muted}
-                    />
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t("common.delete")}: ${account.name}`}
-                    hitSlop={5}
-                    onPress={() => confirmDelete(account)}
-                    className="h-9 w-9 items-center justify-center rounded-[11px]"
-                  >
-                    <Ionicons
-                      name="trash-outline"
-                      size={18}
-                      color={colors.subtle}
-                    />
-                  </Pressable>
-                </View>
                 <View
-                  className="mt-4 h-[3px] w-12 rounded-full"
-                  style={{ backgroundColor: account.color }}
-                />
+                  className="h-10 w-10 items-center justify-center rounded-[13px]"
+                  style={{ backgroundColor: `${type.color}20` }}
+                >
+                  <Ionicons name={type.icon} size={22} color={type.color} />
+                </View>
+                <Text className="text-center text-xs font-semibold text-foreground">
+                  {t(`accounts.types.${type.value}`)}
+                </Text>
               </View>
             ))}
           </View>
-        ) : (
-          <View className="items-center rounded-[20px] border border-border bg-surface px-6 py-8">
-            <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-accent-dark">
-              <Ionicons name="wallet-outline" size={26} color={colors.accent} />
-            </View>
-            <Text className="mt-4 text-center text-base font-bold text-foreground">
-              {t("accounts.manage.emptyTitle")}
-            </Text>
-            <Text className="mt-2 text-center text-sm leading-5 text-muted">
-              {t("accounts.manage.emptyDescription")}
-            </Text>
-          </View>
-        )}
-      </ScrollView>
 
-      {Platform.OS === "web" ? (
-        editorVisible && (
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              zIndex: 1000,
-              justifyContent: "flex-end",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-            }}
+          <Pressable
+            accessibilityRole="button"
+            onPress={openCreateEditor}
+            className="min-h-[58px] flex-row items-center justify-center gap-2 rounded-[17px] bg-accent px-4"
           >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("common.close")}
-              onPress={() => setEditorVisible(false)}
+            <Ionicons
+              name="add-circle-outline"
+              size={22}
+              color={colors.accentContrastText}
+            />
+            <Text
+              className="text-[15px] font-bold"
+              style={{ color: colors.accentContrastText }}
+            >
+              {t("accounts.addAccount")}
+            </Text>
+          </Pressable>
+
+          {accounts.length > 0 ? (
+            <View className="gap-3">
+              {accounts.map((account) => (
+                <View
+                  key={account.id}
+                  className="rounded-[19px] border border-border bg-surface p-4"
+                >
+                  <View className="flex-row items-center gap-3">
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t("common.edit")}: ${account.name}`}
+                      onPress={() => openEditEditor(account)}
+                      className="h-[54px] w-[54px] items-center justify-center rounded-[17px]"
+                      style={{ backgroundColor: `${account.color}20` }}
+                    >
+                      <Ionicons
+                        name={account.icon}
+                        size={26}
+                        color={account.color}
+                      />
+                    </Pressable>
+
+                    <View className="min-w-0 flex-1 gap-1">
+                      <Text
+                        numberOfLines={1}
+                        className="text-[15px] font-bold text-foreground"
+                      >
+                        {account.name}
+                      </Text>
+                      <Text className="text-xs text-muted">
+                        {t(`accounts.types.${account.type}`)} ·{" "}
+                        {account.currencyCode}
+                      </Text>
+                      <Text className="text-sm font-extrabold text-foreground">
+                        {formatCurrency(
+                          calculateAccountBalance(account.id, transactions),
+                          getCurrencyByCode(account.currencyCode),
+                        )}
+                      </Text>
+                    </View>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t("common.edit")}: ${account.name}`}
+                      hitSlop={5}
+                      onPress={() => openEditEditor(account)}
+                      className="h-9 w-9 items-center justify-center rounded-[11px]"
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={19}
+                        color={colors.muted}
+                      />
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t("common.delete")}: ${account.name}`}
+                      hitSlop={5}
+                      onPress={() => confirmDelete(account)}
+                      className="h-9 w-9 items-center justify-center rounded-[11px]"
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color={colors.subtle}
+                      />
+                    </Pressable>
+                  </View>
+                  <View
+                    className="mt-4 h-[3px] w-12 rounded-full"
+                    style={{ backgroundColor: account.color }}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View className="items-center rounded-[20px] border border-border bg-surface px-6 py-8">
+              <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-accent-dark">
+                <Ionicons
+                  name="wallet-outline"
+                  size={26}
+                  color={colors.accent}
+                />
+              </View>
+              <Text className="mt-4 text-center text-base font-bold text-foreground">
+                {t("accounts.manage.emptyTitle")}
+              </Text>
+              <Text className="mt-2 text-center text-sm leading-5 text-muted">
+                {t("accounts.manage.emptyDescription")}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+
+        {Platform.OS === "web" ? (
+          editorVisible && (
+            <View
               style={{
                 position: "absolute",
                 top: 0,
                 right: 0,
                 bottom: 0,
                 left: 0,
-              }}
-            />
-            <KeyboardAvoidingView
-              style={{
-                maxHeight: "100%",
+                zIndex: 1000,
                 justifyContent: "flex-end",
-                zIndex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
               }}
             >
-              {editorSheet}
-            </KeyboardAvoidingView>
-          </View>
-        )
-      ) : (
-        <Modal
-          visible={editorVisible}
-          transparent
-          animationType="slide"
-          statusBarTranslucent
-          onRequestClose={() => setEditorVisible(false)}
-        >
-          <KeyboardAvoidingView
-            className="flex-1 justify-end bg-black/50"
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={vars(getThemeCssVariables(colors))}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("common.close")}
+                onPress={() => setEditorVisible(false)}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                }}
+              />
+              <KeyboardAvoidingView
+                style={{
+                  maxHeight: "100%",
+                  justifyContent: "flex-end",
+                  zIndex: 1,
+                }}
+              >
+                <Animated.View
+                  {...panResponder.panHandlers}
+                  style={{
+                    transform: [{ translateY }],
+                    backgroundColor: colors.background,
+                    maxHeight: "92%",
+                    borderTopLeftRadius: 28,
+                    borderTopRightRadius: 28,
+                    overflow: "hidden",
+                  }}
+                >
+                  {editorSheet}
+                </Animated.View>
+              </KeyboardAvoidingView>
+            </View>
+          )
+        ) : (
+          <Modal
+            visible={editorVisible}
+            transparent
+            animationType="slide"
+            statusBarTranslucent
+            onRequestClose={() => setEditorVisible(false)}
           >
-            {editorSheet}
-          </KeyboardAvoidingView>
-        </Modal>
-      )}
+            <KeyboardAvoidingView
+              className="flex-1 justify-end"
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              style={vars(getThemeCssVariables(colors))}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("common.close")}
+                onPress={closeEditor}
+                className="absolute inset-0 bg-black/50"
+              />
+              <Animated.View
+                {...panResponder.panHandlers}
+                style={{
+                  transform: [{ translateY }],
+                  backgroundColor: colors.background,
+                  maxHeight: "92%",
+                  borderTopLeftRadius: 28,
+                  borderTopRightRadius: 28,
+                  overflow: "hidden",
+                }}
+              >
+                {editorSheet}
+              </Animated.View>
+            </KeyboardAvoidingView>
+          </Modal>
+        )}
       </SafeAreaView>
     </>
   );
