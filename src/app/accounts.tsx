@@ -565,19 +565,32 @@ export default function AccountsScreen({
                     .replace(/-outline$/, "")
                     .replace(/-/g, " ")}
                   onPress={() => setDraftIcon(iconName)}
-                  className="aspect-square w-[15.5%] items-center justify-center rounded-[12px] border"
+                  className="w-[15.5%] items-center justify-center rounded-[12px] border"
                   style={{
+                    height: 58,
+                    padding: 0,
+                    alignItems: "center",
+                    justifyContent: "center",
                     backgroundColor: selected
                       ? `${draftColor}20`
                       : colors.surface,
                     borderColor: selected ? draftColor : colors.border,
                   }}
                 >
-                  <Ionicons
-                    name={iconName}
-                    size={22}
-                    color={selected ? draftColor : colors.muted}
-                  />
+                  <View
+                    style={{
+                      width: 28,
+                      height: 28,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name={iconName}
+                      size={22}
+                      color={selected ? draftColor : colors.muted}
+                    />
+                  </View>
                 </Pressable>
               );
             })}

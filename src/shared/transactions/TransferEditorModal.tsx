@@ -31,12 +31,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 
 type Props = {
   visible: boolean;
@@ -403,189 +399,185 @@ export default function TransferEditorModal({
       onRequestClose={closeModal}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardAvoidingView
-          className="flex-1 justify-end bg-black/50"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={vars(getThemeCssVariables(colors))}
+      <KeyboardAvoidingView
+        className="flex-1 justify-end bg-black/50"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={vars(getThemeCssVariables(colors))}
+      >
+        <Pressable
+          className="absolute inset-0"
+          onPress={closeModal}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+        />
+        <GestureDetector gesture={nativeDismissGesture}>
+        <Animated.View
+          {...(Platform.OS !== "android" ? panResponder.panHandlers : {})}
+          className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
+          style={{
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, 12),
+            transform: [{ translateY }],
+          }}
         >
-          <Pressable
-            className="absolute inset-0"
-            onPress={closeModal}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-          />
-          <GestureDetector gesture={nativeDismissGesture}>
-            <Animated.View
-              {...(Platform.OS !== "android" ? panResponder.panHandlers : {})}
-              className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
-              style={{
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                paddingBottom: Math.max(insets.bottom, 12),
-                transform: [{ translateY }],
-              }}
+          <View
+            className="items-center justify-center pb-2 pt-3" style={{ minHeight: 40 }}
+          >
+            <View className="h-1.5 w-10 rounded-full bg-muted" />
+          </View>
+          <View className="flex-row items-center justify-between border-b border-border px-5 py-4">
+            <View>
+              <Text className="text-lg font-extrabold text-foreground">
+                {transaction
+                  ? t("transactions.editTransfer")
+                  : t("transactions.newTransfer")}
+              </Text>
+              <Text className="mt-1 text-xs text-muted">
+                {t("transactions.transferDescription")}
+              </Text>
+            </View>
+            <Pressable
+              onPress={closeModal}
+              className="h-9 w-9 items-center justify-center rounded-xl bg-surface"
             >
-              <View
-                className="items-center justify-center pb-2 pt-3"
-                style={{ minHeight: 40 }}
-              >
-                <View className="h-1.5 w-10 rounded-full bg-muted" />
+              <Ionicons name="close" size={21} color={colors.foreground} />
+            </Pressable>
+          </View>
+          <GestureDetector gesture={scrollGesture}>
+          <ScrollView
+            className="shrink"
+            onScroll={(event) => {
+              scrollOffsetY.current = Math.max(0, event.nativeEvent.contentOffset.y);
+            }}
+            scrollEventThrottle={16}
+            contentContainerStyle={{ padding: 20, gap: 15 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {accountField("from")}
+            <View className="items-center">
+              <View className="items-center">
+                <Pressable
+                  onPress={swapAccounts}
+                  disabled={!fromId || !toId}
+                  accessibilityRole="button"
+                  accessibilityLabel="Поменять счета местами"
+                  hitSlop={10}
+                  className="rounded-full border border-border bg-accent-dark p-3 active:opacity-60"
+                >
+                  <Ionicons
+                    name="swap-vertical"
+                    size={20}
+                    color={colors.accent}
+                  />
+                </Pressable>
               </View>
-              <View className="flex-row items-center justify-between border-b border-border px-5 py-4">
-                <View>
-                  <Text className="text-lg font-extrabold text-foreground">
-                    {transaction
-                      ? t("transactions.editTransfer")
-                      : t("transactions.newTransfer")}
-                  </Text>
-                  <Text className="mt-1 text-xs text-muted">
-                    {t("transactions.transferDescription")}
+            </View>
+            {accountField("to")}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.amount")}
+                {from ? ` · ${from.currencyCode}` : ""}
+              </Text>
+              <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
+                <GestureDetector gesture={amountInputGesture}>
+                <TextInput
+                  value={amount}
+                  onChangeText={setAmount}
+                  placeholder="0"
+                  placeholderTextColor={colors.subtle}
+                  keyboardType="decimal-pad"
+                  className="min-w-0 flex-1 py-3 text-[24px] font-extrabold text-foreground"
+                />
+                </GestureDetector>
+                <Text className="font-bold text-muted">
+                  {
+                    getCurrencyByCode(
+                      from?.currencyCode ?? DEFAULT_CURRENCY_CODE,
+                    ).symbol
+                  }
+                </Text>
+              </View>
+            </View>
+            {crossCurrency ? (
+              <View className="gap-2">
+                <Text className="text-sm font-semibold text-foreground">
+                  {t("transactions.receivedAmount")} · {to?.currencyCode}
+                </Text>
+                <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
+                  <GestureDetector gesture={toAmountInputGesture}>
+                  <TextInput
+                    value={toAmount}
+                    onChangeText={setToAmount}
+                    placeholder="0"
+                    placeholderTextColor={colors.subtle}
+                    keyboardType="decimal-pad"
+                    className="min-w-0 flex-1 py-3 text-[22px] font-extrabold text-foreground"
+                  />
+                  </GestureDetector>
+                  <Text className="font-bold text-muted">
+                    {
+                      getCurrencyByCode(
+                        to?.currencyCode ?? DEFAULT_CURRENCY_CODE,
+                      ).symbol
+                    }
                   </Text>
                 </View>
-                <Pressable
-                  onPress={closeModal}
-                  className="h-9 w-9 items-center justify-center rounded-xl bg-surface"
-                >
-                  <Ionicons name="close" size={21} color={colors.foreground} />
-                </Pressable>
+                <Text className="text-xs text-muted">
+                  {t("transactions.transferCurrencyHint")}
+                </Text>
               </View>
-              <GestureDetector gesture={scrollGesture}>
-                <ScrollView
-                  className="shrink"
-                  onScroll={(event) => {
-                    scrollOffsetY.current = Math.max(
-                      0,
-                      event.nativeEvent.contentOffset.y,
-                    );
-                  }}
-                  scrollEventThrottle={16}
-                  contentContainerStyle={{ padding: 20, gap: 15 }}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {accountField("from")}
-                  <View className="items-center">
-                    <View className="items-center">
-                      <Pressable
-                        onPress={swapAccounts}
-                        disabled={!fromId || !toId}
-                        accessibilityRole="button"
-                        accessibilityLabel="Поменять счета местами"
-                        hitSlop={10}
-                        className="rounded-full border border-border bg-accent-dark p-3 active:opacity-60"
-                      >
-                        <Ionicons
-                          name="swap-vertical"
-                          size={20}
-                          color={colors.accent}
-                        />
-                      </Pressable>
-                    </View>
-                  </View>
-                  {accountField("to")}
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.amount")}
-                      {from ? ` · ${from.currencyCode}` : ""}
-                    </Text>
-                    <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                      <GestureDetector gesture={amountInputGesture}>
-                        <TextInput
-                          value={amount}
-                          onChangeText={setAmount}
-                          placeholder="0"
-                          placeholderTextColor={colors.subtle}
-                          keyboardType="decimal-pad"
-                          className="min-w-0 flex-1 py-3 text-[24px] font-extrabold text-foreground"
-                        />
-                      </GestureDetector>
-                      <Text className="font-bold text-muted">
-                        {
-                          getCurrencyByCode(
-                            from?.currencyCode ?? DEFAULT_CURRENCY_CODE,
-                          ).symbol
-                        }
-                      </Text>
-                    </View>
-                  </View>
-                  {crossCurrency ? (
-                    <View className="gap-2">
-                      <Text className="text-sm font-semibold text-foreground">
-                        {t("transactions.receivedAmount")} · {to?.currencyCode}
-                      </Text>
-                      <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                        <GestureDetector gesture={toAmountInputGesture}>
-                          <TextInput
-                            value={toAmount}
-                            onChangeText={setToAmount}
-                            placeholder="0"
-                            placeholderTextColor={colors.subtle}
-                            keyboardType="decimal-pad"
-                            className="min-w-0 flex-1 py-3 text-[22px] font-extrabold text-foreground"
-                          />
-                        </GestureDetector>
-                        <Text className="font-bold text-muted">
-                          {
-                            getCurrencyByCode(
-                              to?.currencyCode ?? DEFAULT_CURRENCY_CODE,
-                            ).symbol
-                          }
-                        </Text>
-                      </View>
-                      <Text className="text-xs text-muted">
-                        {t("transactions.transferCurrencyHint")}
-                      </Text>
-                    </View>
-                  ) : null}
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.date")}
-                    </Text>
-                    <DatePickerField
-                      value={date}
-                      onChange={setDate}
-                      label={t("transactions.date")}
-                    />
-                  </View>
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.note")}
-                    </Text>
-                    <GestureDetector gesture={noteInputGesture}>
-                      <TextInput
-                        value={note}
-                        onChangeText={setNote}
-                        placeholder={t("transactions.notePlaceholder")}
-                        placeholderTextColor={colors.subtle}
-                        className="rounded-[14px] border border-border bg-surface px-4 py-3 text-sm text-foreground"
-                        maxLength={120}
-                      />
-                    </GestureDetector>
-                  </View>
-                  {error ? (
-                    <Text className="text-sm font-semibold text-expense">
-                      {error}
-                    </Text>
-                  ) : null}
-                </ScrollView>
+            ) : null}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.date")}
+              </Text>
+              <DatePickerField
+                value={date}
+                onChange={setDate}
+                label={t("transactions.date")}
+              />
+            </View>
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.note")}
+              </Text>
+              <GestureDetector gesture={noteInputGesture}>
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                placeholder={t("transactions.notePlaceholder")}
+                placeholderTextColor={colors.subtle}
+                className="rounded-[14px] border border-border bg-surface px-4 py-3 text-sm text-foreground"
+                maxLength={120}
+              />
               </GestureDetector>
-              <View className="border-t border-border px-5 py-4">
-                <Pressable
-                  onPress={save}
-                  className="min-h-[50px] items-center justify-center rounded-[15px] bg-accent"
-                >
-                  <Text
-                    className="font-bold"
-                    style={{ color: colors.accentContrastText }}
-                  >
-                    {transaction
-                      ? t("transactions.saveChanges")
-                      : t("transactions.transferAction")}
-                  </Text>
-                </Pressable>
-              </View>
-            </Animated.View>
+            </View>
+            {error ? (
+              <Text className="text-sm font-semibold text-expense">
+                {error}
+              </Text>
+            ) : null}
+          </ScrollView>
           </GestureDetector>
-        </KeyboardAvoidingView>
+          <View className="border-t border-border px-5 py-4">
+            <Pressable
+              onPress={save}
+              className="min-h-[50px] items-center justify-center rounded-[15px] bg-accent"
+            >
+              <Text
+                className="font-bold"
+                style={{ color: colors.accentContrastText }}
+              >
+                {transaction
+                  ? t("transactions.saveChanges")
+                  : t("transactions.transferAction")}
+              </Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+        </GestureDetector>
+      </KeyboardAvoidingView>
       </GestureHandlerRootView>
       {accountPicker("from")}
       {accountPicker("to")}

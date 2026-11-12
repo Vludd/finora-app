@@ -16,12 +16,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useAccounts } from "@/shared/context/AccountContext";
 import { useCategories } from "@/shared/context/CategoryContext";
@@ -371,318 +367,306 @@ export default function TransactionEditorModal({
       onRequestClose={closeModal}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardAvoidingView
-          className="flex-1 justify-end bg-black/50"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={vars(getThemeCssVariables(colors))}
+      <KeyboardAvoidingView
+        className="flex-1 justify-end bg-black/50"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={vars(getThemeCssVariables(colors))}
+      >
+        <Pressable
+          className="absolute inset-0"
+          onPress={closeModal}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+        />
+        <GestureDetector gesture={nativeDismissGesture}>
+        <Animated.View
+          {...(Platform.OS !== "android" ? dismissPanResponder.panHandlers : {})}
+          className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
+          style={{
+            // Modal is rendered in a portal on Web; set the surface colors
+            // explicitly so the animated wrapper never falls back to transparent.
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, 12),
+            transform: [{ translateY }],
+          }}
         >
-          <Pressable
-            className="absolute inset-0"
-            onPress={closeModal}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-          />
-          <GestureDetector gesture={nativeDismissGesture}>
-            <Animated.View
-              {...(Platform.OS !== "android"
-                ? dismissPanResponder.panHandlers
-                : {})}
-              className="max-h-[92%] rounded-t-[26px] border border-border bg-background"
-              style={{
-                // Modal is rendered in a portal on Web; set the surface colors
-                // explicitly so the animated wrapper never falls back to transparent.
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                paddingBottom: Math.max(insets.bottom, 12),
-                transform: [{ translateY }],
-              }}
+          <View
+            className="items-center justify-center pb-2 pt-3" style={{ minHeight: 40 }}
+          >
+            <View className="h-1.5 w-10 rounded-full bg-muted" />
+          </View>
+          <View className="flex-row items-center justify-between border-b border-border px-5 py-4">
+            <View className="min-w-0 flex-1">
+              <Text className="text-lg font-extrabold text-foreground">
+                {transaction
+                  ? t("transactions.editTransaction")
+                  : t("transactions.addTransaction")}
+              </Text>
+              <Text className="mt-1 text-xs text-muted">
+                {t("transactions.editorDescription")}
+              </Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("common.cancel")}
+              onPress={closeModal}
+              hitSlop={8}
+              className="h-9 w-9 items-center justify-center rounded-xl bg-surface"
             >
-              <View
-                className="items-center justify-center pb-2 pt-3"
-                style={{ minHeight: 40 }}
-              >
-                <View className="h-1.5 w-10 rounded-full bg-muted" />
+              <Ionicons name="close" size={21} color={colors.foreground} />
+            </Pressable>
+          </View>
+
+          <GestureDetector gesture={scrollGesture}>
+          <ScrollView
+            className="shrink"
+            onScroll={(event) => {
+              scrollOffsetY.current = Math.max(0, event.nativeEvent.contentOffset.y);
+            }}
+            scrollEventThrottle={16}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: 16,
+              gap: 16,
+            }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Transaction type */}
+
+            <View className="flex-row gap-2">
+              {typeOptions.map((option) => {
+                const selected = draftType === option.value;
+                const tone =
+                  option.value === "income"
+                    ? colors.income
+                    : option.value === "expense"
+                      ? colors.expense
+                      : colors.accent;
+                return (
+                  <Pressable
+                    key={option.value}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => chooseType(option.value)}
+                    className={`min-w-0 flex-1 items-center gap-1 rounded-[14px] border px-2 py-3 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
+                  >
+                    <Ionicons
+                      name={option.icon}
+                      size={20}
+                      color={selected ? tone : colors.subtle}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      className={`text-xs font-bold ${selected ? "text-accent" : "text-muted"}`}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Amount */}
+
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.amount")}
+              </Text>
+              <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
+                <GestureDetector gesture={amountInputGesture}>
+                <TextInput
+                  value={draftAmount}
+                  onChangeText={(value) => {
+                    setDraftAmount(value);
+                    setFormError("");
+                  }}
+                  placeholder="0"
+                  placeholderTextColor={colors.subtle}
+                  keyboardType="decimal-pad"
+                  className="min-w-0 flex-1 py-3 text-[24px] font-extrabold text-foreground"
+                />
+                </GestureDetector>
+                <Text className="text-sm font-bold text-muted">
+                  {
+                    getCurrencyByCode(
+                      selectedAccount?.currencyCode ?? DEFAULT_CURRENCY_CODE,
+                    ).symbol
+                  }
+                </Text>
               </View>
-              <View className="flex-row items-center justify-between border-b border-border px-5 py-4">
-                <View className="min-w-0 flex-1">
-                  <Text className="text-lg font-extrabold text-foreground">
-                    {transaction
-                      ? t("transactions.editTransaction")
-                      : t("transactions.addTransaction")}
-                  </Text>
-                  <Text className="mt-1 text-xs text-muted">
-                    {t("transactions.editorDescription")}
-                  </Text>
-                </View>
+            </View>
+
+            {/* Accounts */}
+
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.account")}
+              </Text>
+              {accounts.length !== 0 ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={t("common.cancel")}
-                  onPress={closeModal}
-                  hitSlop={8}
-                  className="h-9 w-9 items-center justify-center rounded-xl bg-surface"
+                  onPress={() => setAccountPickerVisible(true)}
+                  className="flex-row items-center gap-3 rounded-[14px] border border-border bg-surface px-3 py-3"
                 >
-                  <Ionicons name="close" size={21} color={colors.foreground} />
-                </Pressable>
-              </View>
-
-              <GestureDetector gesture={scrollGesture}>
-                <ScrollView
-                  className="shrink"
-                  onScroll={(event) => {
-                    scrollOffsetY.current = Math.max(
-                      0,
-                      event.nativeEvent.contentOffset.y,
-                    );
-                  }}
-                  scrollEventThrottle={16}
-                  contentContainerStyle={{
-                    paddingHorizontal: 20,
-                    paddingTop: 16,
-                    paddingBottom: 16,
-                    gap: 16,
-                  }}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                >
-                  {/* Transaction type */}
-
-                  <View className="flex-row gap-2">
-                    {typeOptions.map((option) => {
-                      const selected = draftType === option.value;
-                      const tone =
-                        option.value === "income"
-                          ? colors.income
-                          : option.value === "expense"
-                            ? colors.expense
-                            : colors.accent;
-                      return (
-                        <Pressable
-                          key={option.value}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected }}
-                          onPress={() => chooseType(option.value)}
-                          className={`min-w-0 flex-1 items-center gap-1 rounded-[14px] border px-2 py-3 ${selected ? "border-accent bg-accent-dark" : "border-border bg-surface"}`}
-                        >
-                          <Ionicons
-                            name={option.icon}
-                            size={20}
-                            color={selected ? tone : colors.subtle}
-                          />
-                          <Text
-                            numberOfLines={1}
-                            className={`text-xs font-bold ${selected ? "text-accent" : "text-muted"}`}
-                          >
-                            {option.label}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  {/* Amount */}
-
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.amount")}
-                    </Text>
-                    <View className="flex-row items-center rounded-[15px] border border-border bg-surface px-4">
-                      <GestureDetector gesture={amountInputGesture}>
-                        <TextInput
-                          value={draftAmount}
-                          onChangeText={(value) => {
-                            setDraftAmount(value);
-                            setFormError("");
-                          }}
-                          placeholder="0"
-                          placeholderTextColor={colors.subtle}
-                          keyboardType="decimal-pad"
-                          className="min-w-0 flex-1 py-3 text-[24px] font-extrabold text-foreground"
-                        />
-                      </GestureDetector>
-                      <Text className="text-sm font-bold text-muted">
-                        {
-                          getCurrencyByCode(
-                            selectedAccount?.currencyCode ??
-                              DEFAULT_CURRENCY_CODE,
-                          ).symbol
-                        }
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Accounts */}
-
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.account")}
-                    </Text>
-                    {accounts.length !== 0 ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={() => setAccountPickerVisible(true)}
-                        className="flex-row items-center gap-3 rounded-[14px] border border-border bg-surface px-3 py-3"
-                      >
-                        {selectedAccount ? (
-                          <Ionicons
-                            name={selectedAccount.icon}
-                            size={20}
-                            color={selectedAccount.color}
-                          />
-                        ) : (
-                          <Ionicons
-                            name="wallet-outline"
-                            size={20}
-                            color={colors.subtle}
-                          />
-                        )}
-                        <View className="min-w-0 flex-1 gap-0.5">
-                          <Text
-                            numberOfLines={1}
-                            className="text-sm font-semibold text-foreground"
-                          >
-                            {selectedAccount?.name ??
-                              t("transactions.selectAccount")}
-                          </Text>
-                          <Text className="text-xs text-muted">
-                            {selectedAccount
-                              ? `${selectedAccount.currencyCode} · ${t("transactions.currentBalance")}`
-                              : t("transactions.chooseAccountHint")}
-                          </Text>
-                        </View>
-                        <Text className="text-sm font-extrabold text-foreground">
-                          {selectedAccount && selectedAccountBalance !== null
-                            ? formatCurrency(
-                                selectedAccountBalance,
-                                getCurrencyByCode(
-                                  selectedAccount.currencyCode ??
-                                    DEFAULT_CURRENCY_CODE,
-                                ),
-                              )
-                            : ""}
-                        </Text>
-                        <Ionicons
-                          name="chevron-forward"
-                          size={17}
-                          color={colors.subtle}
-                        />
-                      </Pressable>
-                    ) : (
-                      <Pressable
-                        onPress={() => {
-                          closeModal();
-                          router.push("/accounts");
-                        }}
-                        className="rounded-xl bg-accent-dark p-3"
-                      >
-                        <Text className="text-sm font-semibold text-accent">
-                          {t("transactions.createAccountFirst")}
-                        </Text>
-                      </Pressable>
-                    )}
-                  </View>
-
-                  {/* Category selector */}
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.category")}
-                    </Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => setCategoryPickerVisible(true)}
-                      className="flex-row items-center gap-3 rounded-[14px] border border-border bg-surface px-3 py-3"
-                    >
-                      {categories.find(
-                        (item) => item.id === draftCategoryId,
-                      ) ? (
-                        <Ionicons
-                          name={
-                            categories.find(
-                              (item) => item.id === draftCategoryId,
-                            )!.icon
-                          }
-                          size={19}
-                          color={
-                            categories.find(
-                              (item) => item.id === draftCategoryId,
-                            )!.color
-                          }
-                        />
-                      ) : (
-                        <Ionicons
-                          name="pricetag-outline"
-                          size={19}
-                          color={colors.subtle}
-                        />
-                      )}
-                      <Text className="flex-1 text-sm font-semibold text-foreground">
-                        {categories.find((item) => item.id === draftCategoryId)
-                          ?.name ?? t("transactions.selectCategory")}
-                      </Text>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={17}
-                        color={colors.subtle}
-                      />
-                    </Pressable>
-                  </View>
-
-                  {/* Date and note are secondary details */}
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.date")}
-                    </Text>
-                    <DatePickerField
-                      value={draftDate}
-                      onChange={(value) => {
-                        setDraftDate(value);
-                        setFormError("");
-                      }}
-                      label={t("transactions.date")}
+                  {selectedAccount ? (
+                    <Ionicons
+                      name={selectedAccount.icon}
+                      size={20}
+                      color={selectedAccount.color}
                     />
-                  </View>
-                  <View className="gap-2">
-                    <Text className="text-sm font-semibold text-foreground">
-                      {t("transactions.note")}
+                  ) : (
+                    <Ionicons
+                      name="wallet-outline"
+                      size={20}
+                      color={colors.subtle}
+                    />
+                  )}
+                  <View className="min-w-0 flex-1 gap-0.5">
+                    <Text
+                      numberOfLines={1}
+                      className="text-sm font-semibold text-foreground"
+                    >
+                      {selectedAccount?.name ?? t("transactions.selectAccount")}
                     </Text>
-                    <GestureDetector gesture={noteInputGesture}>
-                      <TextInput
-                        value={draftNote}
-                        onChangeText={setDraftNote}
-                        placeholder={t("transactions.notePlaceholder")}
-                        placeholderTextColor={colors.subtle}
-                        className="rounded-[14px] border border-border bg-surface px-4 py-3 text-sm text-foreground"
-                        maxLength={120}
-                        returnKeyType="done"
-                      />
-                    </GestureDetector>
-                  </View>
-
-                  {formError ? (
-                    <Text className="text-sm font-semibold text-expense">
-                      {formError}
+                    <Text className="text-xs text-muted">
+                      {selectedAccount
+                        ? `${selectedAccount.currencyCode} · ${t("transactions.currentBalance")}`
+                        : t("transactions.chooseAccountHint")}
                     </Text>
-                  ) : null}
-                </ScrollView>
-              </GestureDetector>
-
-              <View className="border-t border-border px-5 py-4">
+                  </View>
+                  <Text className="text-sm font-extrabold text-foreground">
+                    {selectedAccount && selectedAccountBalance !== null
+                      ? formatCurrency(
+                          selectedAccountBalance,
+                          getCurrencyByCode(
+                            selectedAccount.currencyCode ??
+                              DEFAULT_CURRENCY_CODE,
+                          ),
+                        )
+                      : ""}
+                  </Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={17}
+                    color={colors.subtle}
+                  />
+                </Pressable>
+              ) : (
                 <Pressable
-                  onPress={saveTransaction}
-                  className="min-h-[50px] items-center justify-center rounded-[15px] bg-accent"
+                  onPress={() => {
+                    closeModal();
+                    router.push("/accounts");
+                  }}
+                  className="rounded-xl bg-accent-dark p-3"
                 >
-                  <Text
-                    className="font-bold"
-                    style={{ color: colors.accentContrastText }}
-                  >
-                    {transaction
-                      ? t("transactions.saveChanges")
-                      : t("transactions.addAction")}
+                  <Text className="text-sm font-semibold text-accent">
+                    {t("transactions.createAccountFirst")}
                   </Text>
                 </Pressable>
-              </View>
-            </Animated.View>
+              )}
+            </View>
+
+            {/* Category selector */}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.category")}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setCategoryPickerVisible(true)}
+                className="flex-row items-center gap-3 rounded-[14px] border border-border bg-surface px-3 py-3"
+              >
+                {categories.find((item) => item.id === draftCategoryId) ? (
+                  <Ionicons
+                    name={
+                      categories.find((item) => item.id === draftCategoryId)!
+                        .icon
+                    }
+                    size={19}
+                    color={
+                      categories.find((item) => item.id === draftCategoryId)!
+                        .color
+                    }
+                  />
+                ) : (
+                  <Ionicons
+                    name="pricetag-outline"
+                    size={19}
+                    color={colors.subtle}
+                  />
+                )}
+                <Text className="flex-1 text-sm font-semibold text-foreground">
+                  {categories.find((item) => item.id === draftCategoryId)
+                    ?.name ?? t("transactions.selectCategory")}
+                </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={17}
+                  color={colors.subtle}
+                />
+              </Pressable>
+            </View>
+
+            {/* Date and note are secondary details */}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.date")}
+              </Text>
+              <DatePickerField
+                value={draftDate}
+                onChange={(value) => {
+                  setDraftDate(value);
+                  setFormError("");
+                }}
+                label={t("transactions.date")}
+              />
+            </View>
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">
+                {t("transactions.note")}
+              </Text>
+              <GestureDetector gesture={noteInputGesture}>
+              <TextInput
+                value={draftNote}
+                onChangeText={setDraftNote}
+                placeholder={t("transactions.notePlaceholder")}
+                placeholderTextColor={colors.subtle}
+                className="rounded-[14px] border border-border bg-surface px-4 py-3 text-sm text-foreground"
+                maxLength={120}
+                returnKeyType="done"
+              />
+              </GestureDetector>
+            </View>
+
+            {formError ? (
+              <Text className="text-sm font-semibold text-expense">
+                {formError}
+              </Text>
+            ) : null}
+          </ScrollView>
           </GestureDetector>
-        </KeyboardAvoidingView>
+
+          <View className="border-t border-border px-5 py-4">
+            <Pressable
+              onPress={saveTransaction}
+              className="min-h-[50px] items-center justify-center rounded-[15px] bg-accent"
+            >
+              <Text
+                className="font-bold"
+                style={{ color: colors.accentContrastText }}
+              >
+                {transaction
+                  ? t("transactions.saveChanges")
+                  : t("transactions.addAction")}
+              </Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+        </GestureDetector>
+      </KeyboardAvoidingView>
       </GestureHandlerRootView>
 
       <Modal
